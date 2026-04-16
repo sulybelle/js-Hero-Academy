@@ -5,105 +5,333 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Courses — JS Heroes Academy</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* 10. SORT controls */
+    .sort-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 24px;
+      max-width: 1280px;
+      margin: 0 auto 8px;
+      flex-wrap: wrap;
+    }
+    .sort-bar label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .sort-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-solid);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all 0.2s;
+    }
+    .sort-btn:hover   { border-color: var(--accent); color: var(--accent); }
+    .sort-btn.active  { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+    .empty-state span { font-size: 40px; display: block; margin-bottom: 12px; }
+  </style>
 </head>
 <body>
-  <div id="header-root"></div>
+<div id="header-root"></div>
 
-  <main> 
-    <div class="shield-header">
-      <div class="shield-icon">🛡️</div>
-      <h1>S.H.I.E.L.D. DATABASE</h1>
-      <p class="subtitle">✦ STRATEGIC HOMELAND INTERVENTION, ENFORCEMENT AND LOGISTICS DIVISION</p>
-    </div>
- 
-    <div class="search-filter-bar">
-      <div class="search-row">
-        <div class="search-input-wrap">
-          <input type="text" class="search-input" id="searchInput" placeholder="SEARCH PROTOCOLS...">
+<main>
+  <div class="shield-header">
+    <div class="shield-icon">🛡️</div>
+    <h1>S.H.I.E.L.D. DATABASE</h1>
+    <p class="subtitle">✦ STRATEGIC HOMELAND INTERVENTION, ENFORCEMENT AND LOGISTICS DIVISION</p>
+  </div>
+
+  <!-- 4. ІЗДЕУ ЖӘНЕ ФИЛЬТР -->
+  <div class="search-filter-bar">
+    <div class="search-row">
+      <div class="search-input-wrap">
+        <input type="text" class="search-input" id="searchInput" placeholder="SEARCH PROTOCOLS...">
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">
+          <span class="lang-en">DIFFICULTY</span><span class="lang-kz">ҚИЫНДЫҚ</span>
+        </span>
+        <div class="filter-pills" id="difficultyPills">
+          <button class="pill active" data-val="all">ALL</button>
+          <button class="pill" data-val="beginner">BEGINNER</button>
+          <button class="pill" data-val="intermediate">INTERMEDIATE</button>
+          <button class="pill" data-val="advanced">ADVANCED</button>
         </div>
-        <div class="filter-group">
-          <span class="filter-label"><span class="lang-en">DIFFICULTY LEVEL</span><span class="lang-kz">ҚИЫНДЫҚ ДЕҢГЕЙІ</span></span>
-          <div class="filter-pills" id="difficultyPills">
-            <button class="pill active" data-val="all">ALL</button>
-            <button class="pill" data-val="beginner">BEGINNER</button>
-            <button class="pill" data-val="intermediate">INTERMEDIATE</button>
-            <button class="pill" data-val="advanced">ADVANCED</button>
-          </div>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label"><span class="lang-en">HERO TYPE</span><span class="lang-kz">БАТЫР ТҮРІ</span></span>
-          <div class="filter-pills" id="heroPills">
-            <button class="pill active" data-val="all">ALL</button>
-            <button class="pill" data-val="tech">TECH</button>
-            <button class="pill" data-val="magic">MAGIC</button>
-            <button class="pill" data-val="mutation">MUTATION</button>
-          </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">
+          <span class="lang-en">HERO TYPE</span><span class="lang-kz">БАТЫР ТҮРІ</span>
+        </span>
+        <div class="filter-pills" id="heroPills">
+          <button class="pill active" data-val="all">ALL</button>
+          <button class="pill" data-val="tech">TECH</button>
+          <button class="pill" data-val="magic">MAGIC</button>
+          <button class="pill" data-val="mutation">MUTATION</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="files-count">
-      <span>FILES FOUND: <strong id="filesCount">0</strong></span>
-      <span>📋 AUTH LEVEL: ALPHA</span>
+  <!-- 10. SORT БАТЫРМАЛАРЫ -->
+  <div class="sort-bar">
+    <label>SORT:</label>
+    <button class="sort-btn active" data-sort="default" onclick="setSort('default', this)">
+      <span class="lang-en">Default</span><span class="lang-kz">Әдепкі</span>
+    </button>
+    <button class="sort-btn" data-sort="asc" onclick="setSort('asc', this)">A → Z</button>
+    <button class="sort-btn" data-sort="desc" onclick="setSort('desc', this)">Z → A</button>
+  </div>
+
+  <div class="files-count">
+    <span>FILES FOUND: <strong id="filesCount">0</strong></span>
+    <span>📋 AUTH LEVEL: ALPHA</span>
+  </div>
+
+  <!-- 3. ДИНАМИКАЛЫҚ КОНТЕНТ — JS арқылы render -->
+  <div class="courses-list" id="coursesList"></div>
+</main>
+
+<!-- 5. MODAL — курс туралы толық ақпарат -->
+<div class="modal-overlay" id="courseModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 id="modalTitle" style="font-family:var(--font-display);font-size:22px;letter-spacing:2px;"></h3>
+      <button onclick="closeCourseModal()" style="background:none;border:none;color:var(--text-secondary);font-size:22px;cursor:pointer;">✕</button>
     </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
 
-    <div class="courses-list" id="coursesList"></div>
-  </main>
+<div id="footer-root"></div>
+<script src="/js/main.js"></script>
+<script>
+  // 3. Массивден деректер — API-дан алынады
+  let allCourses = [];
+  let filterDiff = 'all';
+  let filterHero = 'all';
+  let currentSort = 'default';
 
-  <div id="footer-root"></div>
+  document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('header-root').innerHTML = getHeader('courses');
+    document.getElementById('footer-root').innerHTML = getFooter();
+    initPage();
 
-  <script src="/js/main.js"></script>
-  <script>
-    let allCourses = [];
-    let filterDiff = 'all';
-    let filterHero = 'all';
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      document.getElementById('header-root').innerHTML = getHeader('courses');
-      document.getElementById('footer-root').innerHTML = getFooter();
-      initPage();
-
+    // 12. LOADING SPINNER — деректер жүктелгенше
+    showSpinner();
+    try {
       const res = await fetch('/api/courses');
       allCourses = await res.json();
-      renderCourses();
+    } catch (e) {
+      allCourses = [];
+    }
+    hideSpinner();
 
-      document.getElementById('searchInput').addEventListener('input', renderCourses);
+    // 3. HTML-ге JS арқылы render
+    renderCourses();
 
-      document.querySelectorAll('#difficultyPills .pill').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('#difficultyPills .pill').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          filterDiff = btn.dataset.val;
-          renderCourses();
-        });
-      });
+    // 4. Real-time іздеу
+    document.getElementById('searchInput').addEventListener('input', renderCourses);
 
-      document.querySelectorAll('#heroPills .pill').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('#heroPills .pill').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          filterHero = btn.dataset.val;
-          renderCourses();
-        });
+    // Filter pills
+    document.querySelectorAll('#difficultyPills .pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#difficultyPills .pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterDiff = btn.dataset.val;
+        renderCourses();
       });
     });
 
-    function renderCourses() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      let filtered = allCourses;
-      if (q) filtered = filtered.filter(c => c.en.title.toLowerCase().includes(q) || c.kz.title.toLowerCase().includes(q));
-      if (filterDiff !== 'all') filtered = filtered.filter(c => c.category === filterDiff);
-      if (filterHero !== 'all') filtered = filtered.filter(c => c.heroType === filterHero);
+    document.querySelectorAll('#heroPills .pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#heroPills .pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterHero = btn.dataset.val;
+        renderCourses();
+      });
+    });
+  });
 
-      document.getElementById('filesCount').textContent = filtered.length;
-      const list = document.getElementById('coursesList');
-      if (filtered.length === 0) {
-        list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px;">No protocols found</p>';
-        return;
-      }
-      list.innerHTML = filtered.map(c => createCourseCardHorizontal(c)).join('');
-      setLanguage(currentLang);
+  // 10. SORT
+  function setSort(val, btn) {
+    currentSort = val;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    showToast(currentLang === 'kz' ? 'Сұрыпталды' : 'Sorted!', 'info');
+    renderCourses();
+  }
+
+  // 3 + 4. RENDER — filter + search + sort
+  function renderCourses() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+
+    // 4. Іздеу фильтрі
+    let filtered = allCourses.filter(c => {
+      const title = (c.en.title + ' ' + c.kz.title).toLowerCase();
+      const desc  = (c.en.desc  + ' ' + c.kz.desc).toLowerCase();
+      return title.includes(q) || desc.includes(q);
+    });
+
+    if (filterDiff !== 'all') filtered = filtered.filter(c => c.category === filterDiff);
+    if (filterHero !== 'all') filtered = filtered.filter(c => c.heroType === filterHero);
+
+    // 10. Сұрыптау — Asc / Desc
+    if (currentSort === 'asc') {
+      filtered.sort((a, b) => {
+        const ta = currentLang === 'kz' ? a.kz.title : a.en.title;
+        const tb = currentLang === 'kz' ? b.kz.title : b.en.title;
+        return ta.localeCompare(tb);
+      });
+    } else if (currentSort === 'desc') {
+      filtered.sort((a, b) => {
+        const ta = currentLang === 'kz' ? a.kz.title : a.en.title;
+        const tb = currentLang === 'kz' ? b.kz.title : b.en.title;
+        return tb.localeCompare(ta);
+      });
     }
-  </script>
+
+    // 3. UI автоматты жаңарады
+    document.getElementById('filesCount').textContent = filtered.length;
+    const list = document.getElementById('coursesList');
+
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <span>🔍</span>
+          ${currentLang === 'kz' ? 'Курс табылмады' : 'No courses found'}
+        </div>`;
+      return;
+    }
+
+    // 3. HTML-ге JS арқылы render + 8. Like батырмасы қосылған
+    list.innerHTML = filtered.map(c => buildCourseCard(c)).join('');
+    updateLikeButtons();
+    setLanguage(currentLang);
+  }
+
+  function buildCourseCard(c) {
+    const title = currentLang === 'kz' ? c.kz.title : c.en.title;
+    const desc  = currentLang === 'kz' ? c.kz.desc  : c.en.desc;
+    const liked = isLiked(c.id);
+    return `
+      <div class="course-card" style="cursor:default;">
+        <div class="card-thumb" style="cursor:pointer;" onclick="openCourseModal(${c.id})">
+          <img src="${c.img}" alt="${title}" loading="lazy">
+          <div class="play-overlay">
+            <div class="play-icon">▶</div>
+            <span class="play-label">Preview</span>
+          </div>
+        </div>
+        <div class="card-content">
+          <div class="card-tags">
+            <span class="tag tag-${c.heroType}">${c.heroType.toUpperCase()}</span>
+            <span class="tag tag-${c.category}">✦ ${c.category.toUpperCase()}</span>
+          </div>
+          <h3 style="cursor:pointer;" onclick="openCourseModal(${c.id})">${title}</h3>
+          <p>${desc}</p>
+        </div>
+        <div class="card-action">
+          <button class="enroll-btn" onclick="enrollCourse(${c.id}, '${title.replace(/'/g,"\\'")}')">ENROLL ✦</button>
+          <!-- 8. LIKE / FAVORITE -->
+          <button
+            data-like-id="${c.id}"
+            onclick="toggleLike(${c.id})"
+            style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px;"
+            title="Favorite"
+          >${liked ? '❤️' : '🤍'}</button>
+          <span class="status-badge">STATUS: <span>ACTIVE</span></span>
+        </div>
+      </div>`;
+  }
+
+  // 9. ЕСЕПТЕУ — enrolled count
+  function enrollCourse(id, title) {
+    const user = getUser();
+    if (!user) {
+      showToast(currentLang === 'kz' ? 'Алдымен кіріңіз!' : 'Please login first!', 'warning');
+      return;
+    }
+    // LocalStorage-да enrolled курстарды сақтау
+    const enrolled = JSON.parse(localStorage.getItem('jsha_enrolled') || '[]');
+    if (!enrolled.includes(id)) {
+      enrolled.push(id);
+      localStorage.setItem('jsha_enrolled', JSON.stringify(enrolled));
+      saveProgress({ enrolledCount: enrolled.length, percent: Math.min(enrolled.length * 5, 100) });
+      showToast(
+        (currentLang === 'kz' ? `"${title}" курсына жазылдыңыз!` : `Enrolled in "${title}"!`),
+        'success'
+      );
+    } else {
+      showToast(currentLang === 'kz' ? 'Сіз бұл курсқа жазылғансыз' : 'Already enrolled', 'info');
+    }
+  }
+
+  // 5. MODAL — курс туралы толық ақпарат
+  function openCourseModal(id) {
+    const c = allCourses.find(x => x.id === id);
+    if (!c) return;
+    const title = currentLang === 'kz' ? c.kz.title : c.en.title;
+    const desc  = currentLang === 'kz' ? c.kz.desc  : c.en.desc;
+    const liked = isLiked(id);
+    const enrolled = JSON.parse(localStorage.getItem('jsha_enrolled') || '[]');
+    const isEnrolled = enrolled.includes(id);
+
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = `
+      <img src="${c.img}" alt="${title}" style="width:100%;border-radius:8px;margin-bottom:16px;max-height:200px;object-fit:cover;">
+      <div class="card-tags" style="margin-bottom:12px;">
+        <span class="tag tag-${c.heroType}">${c.heroType.toUpperCase()}</span>
+        <span class="tag tag-${c.category}">${c.category.toUpperCase()}</span>
+      </div>
+      <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;margin-bottom:20px;">${desc}</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="enrollCourse(${id},'${title.replace(/'/g,"\\'")}'); closeCourseModal();">
+          ${isEnrolled
+            ? (currentLang==='kz'?'✅ Жазылғансыз':'✅ Enrolled')
+            : (currentLang==='kz'?'Жазылу ✦':'Enroll ✦')}
+        </button>
+        <button
+          data-like-id="${id}"
+          onclick="toggleLike(${id}); document.querySelector('#courseModal [data-like-id=\\'${id}\\']').innerHTML = isLiked(${id}) ? '❤️ Saved' : '🤍 Save';"
+          style="background:none;border:1px solid var(--border-solid);border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);"
+        >${liked ? '❤️ Saved' : '🤍 Save'}</button>
+        <a href="/course/${id}" class="btn btn-secondary btn-sm">
+          ${currentLang==='kz'?'Толығырақ →':'View Course →'}
+        </a>
+      </div>
+    `;
+    document.getElementById('courseModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    showToast(currentLang === 'kz' ? 'Курс ашылды' : 'Course opened', 'info');
+  }
+
+  function closeCourseModal() {
+    document.getElementById('courseModal').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // ESC — модалды жабу
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCourseModal(); });
+  document.getElementById('courseModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCourseModal();
+  });
+</script>
 </body>
 </html>

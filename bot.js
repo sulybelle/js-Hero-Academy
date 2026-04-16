@@ -4,11 +4,6 @@ const BOT_TOKEN = process.env.BOT_TOKEN || '8673437480:AAGFZMw_0QJbyuhRZEaesDTT7
 
 const WEB_URL = process.env.WEB_URL || 'http://localhost:3003';
 
-if (BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE') {
-  console.log('⚠️  BOT_TOKEN орнатылмаған. @BotFather-дан токен алып, BOT_TOKEN env айнымалысына немесе кодқа енгізіңіз.');
-  console.log('ℹ️  Или .env файл жасап, BOT_TOKEN=ваш_токен деп жазыңыз.');
-}
-
 const bot = new Telegraf(BOT_TOKEN);
 
 // /start - Бастау

@@ -5,43 +5,94 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JS Heroes Academy</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* 11. TABS */
+    .tab-nav { display:flex; gap:4px; border-bottom:2px solid var(--border-solid); margin-bottom:24px; }
+    .tab-nav-btn {
+      padding:10px 24px; background:none; border:none;
+      border-bottom:2px solid transparent; color:var(--text-secondary);
+      font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s;
+      font-family:var(--font-body); margin-bottom:-2px; letter-spacing:0.5px;
+    }
+    .tab-nav-btn:hover  { color:var(--text); }
+    .tab-nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+
+    /* 11. ACCORDION */
+    .accordion-item {
+      border:1px solid var(--border-solid); border-radius:10px;
+      margin-bottom:8px; overflow:hidden; transition:border-color 0.2s;
+    }
+    .accordion-item.open { border-color:var(--accent); }
+    .accordion-header {
+      width:100%; padding:16px 20px; background:var(--bg-card); border:none;
+      color:var(--text); font-size:14px; font-weight:600; text-align:left;
+      cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+      font-family:var(--font-body); transition:background 0.2s;
+    }
+    .accordion-header:hover { background:var(--bg-card-hover); }
+    .accordion-icon { transition:transform 0.3s; font-size:12px; color:var(--accent); }
+    .accordion-item.open .accordion-icon { transform:rotate(180deg); }
+    .accordion-body {
+      max-height:0; overflow:hidden; transition:max-height 0.35s ease;
+      background:var(--bg-primary); font-size:14px; color:var(--text-secondary); line-height:1.7;
+    }
+    .accordion-body.open { max-height:300px; padding:16px 20px; }
+  </style>
 </head>
 <body>
-  <div id="header-root"></div>
+<div id="header-root"></div>
 
-  <main>
-    <div class="hero">
-      <div class="hero-inner">
-        <div class="hero-text">
-          <div class="hero-badge">✦ <span class="lang-en">WELCOME TO THE ACADEMY</span><span class="lang-kz">АКАДЕМИЯҒА ҚОШ КЕЛДІҢІЗ</span></div>
-          <h1>BECOME A JS<br>LEGEND!</h1>
-          <p class="hero-desc">
-            <span class="lang-en">Master the language of the web in Kazakh and English. Assemble your coding skills today.</span>
-            <span class="lang-kz">Веб тілін қазақ және ағылшын тілдерінде меңгеріңіз. Бүгін кодтау дағдыларыңызды жинаңыз.</span>
-          </p>
-          <a href="/courses" class="btn btn-primary">
-            <span class="lang-en">START TRAINING</span><span class="lang-kz">ОҚУДЫ БАСТАУ</span> ▶
-          </a>
-        </div>
-        <div class="hero-visual">
-          <img src="https://avatars.mds.yandex.net/i?id=d7c66c5096d1a2ed46590fddb8cc95a5_l-12532291-images-thumbs&n=13" alt="Hero" class="hero-img">
-          <div class="code-float top">const hero = new JS();</div>
-          <div class="code-float bottom">await hero.saveWorld();</div>
-          <div class="chat-bubble">
-            <div class="chat-avatar">🤖</div>
-            <div class="chat-text">
-              <span class="lang-en">Great job! Your code is as strong as Vibranium!</span>
-              <span class="lang-kz">Жарайсыз! Сіздің кодыңыз Вибраниум сияқты мықты!</span>
-            </div>
+<main>
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge">✦ <span class="lang-en">WELCOME TO THE ACADEMY</span><span class="lang-kz">АКАДЕМИЯҒА ҚОШ КЕЛДІҢІЗ</span></div>
+        <h1>BECOME A JS<br>LEGEND!</h1>
+        <p class="hero-desc">
+          <span class="lang-en">Master the language of the web in Kazakh and English. Assemble your coding skills today.</span>
+          <span class="lang-kz">Веб тілін қазақ және ағылшын тілдерінде меңгеріңіз. Бүгін кодтау дағдыларыңызды жинаңыз.</span>
+        </p>
+        <a href="/courses" class="btn btn-primary">
+          <span class="lang-en">START TRAINING</span><span class="lang-kz">ОҚУДЫ БАСТАУ</span> ▶
+        </a>
+      </div>
+      <div class="hero-visual">
+        <img src="https://avatars.mds.yandex.net/i?id=d7c66c5096d1a2ed46590fddb8cc95a5_l-12532291-images-thumbs&n=13" alt="Hero" class="hero-img">
+        <div class="code-float top">const hero = new JS();</div>
+        <div class="code-float bottom">await hero.saveWorld();</div>
+        <div class="chat-bubble">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-text">
+            <span class="lang-en">Great job! Your code is as strong as Vibranium!</span>
+            <span class="lang-kz">Жарайсыз! Сіздің кодыңыз Вибраниум сияқты мықты!</span>
           </div>
         </div>
       </div>
     </div>
- 
-    <section>
+  </div>
+
+  <!-- 11. TABS -->
+  <section>
+    <div class="tab-nav" role="tablist">
+      <button class="tab-nav-btn active" onclick="switchTab('courses', this)">
+        🎓 <span class="lang-en">Courses</span><span class="lang-kz">Курстар</span>
+      </button>
+      <button class="tab-nav-btn" onclick="switchTab('reviews', this)">
+        ⭐ <span class="lang-en">Reviews</span><span class="lang-kz">Пікірлер</span>
+      </button>
+      <button class="tab-nav-btn" onclick="switchTab('faq', this)">
+        ❓ <span class="lang-en">FAQ</span><span class="lang-kz">Сұрақтар</span>
+      </button>
+    </div>
+
+    <!-- TAB: Courses — 3. ДИНАМИКАЛЫҚ КОНТЕНТ -->
+    <div class="tab-pane active" id="tab-courses">
       <div class="section-header">
         <h2><span class="lang-en">POPULAR <span>COURSES</span></span><span class="lang-kz">ТАНЫМАЛ <span>КУРСТАР</span></span></h2>
-        <p><span class="lang-en">Start your JavaScript hero journey with our top courses</span><span class="lang-kz">JavaScript батыр жолыңызды ең танымал курстармен бастаңыз</span></p>
+        <p><span class="lang-en">Start your JavaScript hero journey</span><span class="lang-kz">JavaScript батыр жолыңызды бастаңыз</span></p>
       </div>
       <div class="cards-grid" id="coursesGrid"></div>
       <div class="stats-row">
@@ -50,61 +101,164 @@
         <div class="stat-card"><div class="stat-num">2</div><div class="stat-label"><span class="lang-en">Languages</span><span class="lang-kz">Тілдер</span></div></div>
         <div class="stat-card"><div class="stat-num">∞</div><div class="stat-label"><span class="lang-en">Access</span><span class="lang-kz">Қол жетімділік</span></div></div>
       </div>
-    </section>
- 
-    <section>
+    </div>
+
+    <!-- TAB: Reviews -->
+    <div class="tab-pane" id="tab-reviews">
       <div class="section-header">
         <h2><span class="lang-en">HERO <span>REVIEWS</span></span><span class="lang-kz">БАТЫРЛАР <span>ПІКІРЛЕРІ</span></span></h2>
-        <p><span class="lang-en">What our heroes say about the academy</span><span class="lang-kz">Біздің батырлар академия туралы не дейді</span></p>
       </div>
       <div class="reviews-grid" id="reviewsGrid"></div>
-      <div class="review-form" id="reviewForm">
+      <div class="review-form" style="max-width:600px;margin:24px auto 0;">
         <h4 style="margin-bottom:12px;font-size:15px;">
           <span class="lang-en">Leave a Review</span><span class="lang-kz">Пікір қалдыру</span>
         </h4>
         <div class="alert alert-success" id="reviewSuccess"></div>
-        <input type="text" id="reviewName" class="search-input" style="margin-bottom:10px;width:100%;font-family:var(--font-body);" placeholder="Your name / Сіздің атыңыз">
+        <input type="text" id="reviewName" class="search-input"
+          style="margin-bottom:10px;width:100%;font-family:var(--font-body);"
+          placeholder="Your name / Сіздің атыңыз">
         <div class="star-select" id="starSelect">
-          <span onclick="selectStar(1)">★</span>
-          <span onclick="selectStar(2)">★</span>
-          <span onclick="selectStar(3)">★</span>
-          <span onclick="selectStar(4)">★</span>
+          <span onclick="selectStar(1)">★</span><span onclick="selectStar(2)">★</span>
+          <span onclick="selectStar(3)">★</span><span onclick="selectStar(4)">★</span>
           <span onclick="selectStar(5)">★</span>
         </div>
-        <textarea id="reviewText" placeholder="Write your review... / Пікіріңізді жазыңыз..."></textarea>
-        <button class="btn btn-primary btn-sm mt-16" onclick="submitReview()">
+        <textarea id="reviewText" placeholder="Write your review... / Пікіріңізді жазыңыз..."
+          style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border-solid);
+                 background:var(--bg-primary);color:var(--text);font-family:var(--font-body);
+                 font-size:14px;resize:vertical;min-height:80px;margin-bottom:8px;"></textarea>
+        <button class="btn btn-primary btn-sm" onclick="submitReview()">
           <span class="lang-en">Submit</span><span class="lang-kz">Жіберу</span>
         </button>
       </div>
-    </section>
-  </main>
+    </div>
 
-  <div id="footer-root"></div>
+    <!-- TAB: FAQ — 11. ACCORDION -->
+    <div class="tab-pane" id="tab-faq">
+      <div class="section-header">
+        <h2><span class="lang-en">FREQUENTLY ASKED <span>QUESTIONS</span></span><span class="lang-kz">ЖИІ ҚОЙЫЛАТЫН <span>СҰРАҚТАР</span></span></h2>
+      </div>
+      <div id="accordionContainer" style="max-width:700px;margin:0 auto;"></div>
+    </div>
+  </section>
+</main>
 
-  <script src="/js/main.js"></script>
-  <script>
-    let selectedRating = 5;
+<div id="footer-root"></div>
+<script src="/js/main.js"></script>
+<script>
+  let selectedRating = 5;
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      document.getElementById('header-root').innerHTML = getHeader('home');
-      document.getElementById('footer-root').innerHTML = getFooter();
-      initPage();
-      selectStar(5);
+  const faqData = [
+    {
+      q_en: 'Do I need prior programming experience?',
+      q_kz: 'Алдын ала бағдарламалау тәжірибесі керек пе?',
+      a_en: 'No prior experience needed! Our courses start from the very basics of JavaScript and gradually progress to advanced topics.',
+      a_kz: 'Алдын ала тәжірибе қажет емес! Курстарымыз JavaScript негіздерінен басталып, біртіндеп күрделене береді.'
+    },
+    {
+      q_en: 'Are the courses available in Kazakh?',
+      q_kz: 'Курстар қазақ тілінде бар ма?',
+      a_en: 'Yes! All courses are available in both Kazakh and English. Switch language anytime using the button in the header.',
+      a_kz: 'Иә! Барлық курстар қазақ және ағылшын тілдерінде қолжетімді.'
+    },
+    {
+      q_en: 'How do quizzes work?',
+      q_kz: 'Тесттер қалай жұмыс істейді?',
+      a_en: 'Each video lesson has a corresponding quiz with 4 questions. Your scores are saved automatically.',
+      a_kz: 'Әр видеосабаққа сәйкес 4 сұрақтан тұратын тест бар. Нәтижелер автоматты сақталады.'
+    },
+    {
+      q_en: 'Can I save my favorite courses?',
+      q_kz: 'Таңдаулы курстарды сақтауға бола ма?',
+      a_en: 'Yes! Click the heart icon on any course to add it to your favorites. Favorites are saved in your browser.',
+      a_kz: 'Иә! Кез келген курстың жүрек белгісін басып, таңдаулыларға қосыңыз.'
+    },
+    {
+      q_en: 'Is registration required to view courses?',
+      q_kz: 'Курстарды көру үшін тіркелу керек пе?',
+      a_en: 'You can browse all courses without registration. However, to enroll and track progress, an account is required.',
+      a_kz: 'Тіркелмей-ақ барлық курстарды шолуға болады. Бірақ жазылу үшін аккаунт қажет.'
+    }
+  ];
 
+  document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('header-root').innerHTML = getHeader('home');
+    document.getElementById('footer-root').innerHTML = getFooter();
+    initPage();
+    selectStar(5);
+    buildAccordion();
+
+    // 12. SPINNER — жүктеу кезінде
+    showSpinner();
+    try {
       const res = await fetch('/api/courses');
       const courses = await res.json();
-      document.getElementById('coursesGrid').innerHTML = courses.slice(0, 6).map(c => createCourseCardVertical(c)).join('');
+      // 3. Массивтен деректер шығарылып, HTML-ге render жасалады
+      document.getElementById('coursesGrid').innerHTML =
+        courses.slice(0, 6).map(c => createCourseCardVertical(c)).join('');
+      updateLikeButtons();
       setLanguage(currentLang);
+    } catch {
+      document.getElementById('coursesGrid').innerHTML =
+        '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:20px;">Failed to load</p>';
+    }
+    hideSpinner();
+    loadReviews();
+  });
 
-      loadReviews();
-    });
+  // 11. TABS — контент ауысады, UI дұрыс жұмыс істейді
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    btn.classList.add('active');
+    // 7. TOAST — таб ауысқанда хабарлама
+    const names = { courses: { en:'Courses', kz:'Курстар' }, reviews: { en:'Reviews', kz:'Пікірлер' }, faq: { en:'FAQ', kz:'Сұрақтар' } };
+    showToast((currentLang === 'kz' ? names[tabId].kz : names[tabId].en) + (currentLang==='kz'?' бетіне өтті':' tab opened'), 'info');
+  }
 
-    async function loadReviews() {
+  // 11. ACCORDION
+  function buildAccordion() {
+    const container = document.getElementById('accordionContainer');
+    container.innerHTML = faqData.map((item, i) => `
+      <div class="accordion-item" id="acc-${i}">
+        <button class="accordion-header" onclick="toggleAccordion(${i})">
+          <span>
+            <span class="lang-en">${item.q_en}</span>
+            <span class="lang-kz">${item.q_kz}</span>
+          </span>
+          <span class="accordion-icon">▼</span>
+        </button>
+        <div class="accordion-body" id="acc-body-${i}">
+          <span class="lang-en">${item.a_en}</span>
+          <span class="lang-kz">${item.a_kz}</span>
+        </div>
+      </div>
+    `).join('');
+    setLanguage(currentLang);
+  }
+
+  function toggleAccordion(i) {
+    const item = document.getElementById('acc-' + i);
+    const body = document.getElementById('acc-body-' + i);
+    const wasOpen = item.classList.contains('open');
+    // Барлығын жабу
+    document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.accordion-body').forEach(el => el.classList.remove('open'));
+    if (!wasOpen) {
+      item.classList.add('open');
+      body.classList.add('open');
+    }
+  }
+
+  async function loadReviews() {
+    try {
       const res = await fetch('/api/reviews');
       const reviews = await res.json();
       const grid = document.getElementById('reviewsGrid');
-      if (reviews.length === 0) {
-        grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:20px;"><span class="lang-en">No reviews yet. Be the first hero!</span><span class="lang-kz">Пікірлер жоқ. Бірінші батыр болыңыз!</span></p>';
+      if (!reviews.length) {
+        grid.innerHTML = `<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:20px;">
+          <span class="lang-en">No reviews yet. Be the first hero!</span>
+          <span class="lang-kz">Пікірлер жоқ. Бірінші батыр болыңыз!</span></p>`;
         setLanguage(currentLang);
         return;
       }
@@ -114,26 +268,29 @@
             <div class="review-avatar">${r.userName.charAt(0).toUpperCase()}</div>
             <div>
               <div class="review-name">${r.userName}</div>
-              <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+              <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
             </div>
           </div>
           <div class="review-text">${r.text}</div>
           <div class="review-date">${new Date(r.createdAt).toLocaleDateString()}</div>
         </div>
       `).join('');
-    }
+    } catch { document.getElementById('reviewsGrid').innerHTML = ''; }
+  }
 
-    function selectStar(n) {
-      selectedRating = n;
-      document.querySelectorAll('#starSelect span').forEach((s, i) => {
-        s.classList.toggle('active', i < n);
-      });
-    }
+  function selectStar(n) {
+    selectedRating = n;
+    document.querySelectorAll('#starSelect span').forEach((s, i) => s.classList.toggle('active', i < n));
+  }
 
-    async function submitReview() {
-      const name = document.getElementById('reviewName').value.trim();
-      const text = document.getElementById('reviewText').value.trim();
-      if (!name || !text) return;
+  async function submitReview() {
+    const name = document.getElementById('reviewName').value.trim();
+    const text = document.getElementById('reviewText').value.trim();
+    if (!name || !text) {
+      showToast(currentLang==='kz'?'Барлық өрістерді толтырыңыз':'Fill in all fields', 'warning');
+      return;
+    }
+    try {
       await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -141,12 +298,16 @@
       });
       document.getElementById('reviewName').value = '';
       document.getElementById('reviewText').value = '';
-      const alert = document.getElementById('reviewSuccess');
-      alert.textContent = currentLang === 'kz' ? 'Пікіріңіз сәтті жіберілді!' : 'Review submitted successfully!';
-      alert.style.display = 'block';
-      setTimeout(() => alert.style.display = 'none', 3000);
+      const alertEl = document.getElementById('reviewSuccess');
+      alertEl.textContent = currentLang==='kz'?'✅ Пікіріңіз сәтті жіберілді!':'✅ Review submitted!';
+      alertEl.style.display = 'block';
+      setTimeout(() => alertEl.style.display = 'none', 3000);
+      showToast(currentLang==='kz'?'Пікір жіберілді! ⭐':'Review submitted! ⭐', 'success');
       loadReviews();
+    } catch {
+      showToast('Error submitting review', 'error');
     }
-  </script>
+  }
+</script>
 </body>
 </html>

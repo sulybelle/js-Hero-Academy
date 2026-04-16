@@ -7,275 +7,415 @@
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div id="header-root"></div>
+<div id="header-root"></div>
 
-  <main>
-    <div class="quiz-header">
-      <h1><span class="lang-en">KNOWLEDGE <span>ARENA</span></span><span class="lang-kz">БІЛІМ <span>АРЕНАСЫ</span></span></h1>
-      <p style="color:var(--text-secondary);font-size:14px;">
-        <span class="lang-en">Test your hero abilities — 20 quizzes matching each video lesson</span>
-        <span class="lang-kz">Батыр қабілеттеріңізді тексеріңіз — 20 тест әр видеосабаққа сәйкес</span>
+<main>
+  <div class="quiz-header">
+    <h1>
+      <span class="lang-en">KNOWLEDGE <span>ARENA</span></span>
+      <span class="lang-kz">БІЛІМ <span>АРЕНАСЫ</span></span>
+    </h1>
+    <p style="color:var(--text-secondary);font-size:14px;">
+      <span class="lang-en">Test your hero abilities — 20 quizzes matching each video lesson</span>
+      <span class="lang-kz">Батыр қабілеттеріңізді тексеріңіз — 20 тест әр видеосабаққа сәйкес</span>
+    </p>
+    <div class="quiz-modes" id="modeButtons">
+      <button class="btn btn-primary btn-sm" onclick="setMode('test')">
+        🎯 <span class="lang-en">Test Mode</span><span class="lang-kz">Тест режимі</span>
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="setMode('flashcard')">
+        🃏 <span class="lang-en">Flashcards</span><span class="lang-kz">Карточкалар</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Quiz grid -->
+  <div class="quiz-select" id="quizSelect">
+    <div class="quiz-card-grid" id="quizGrid"></div>
+  </div>
+
+  <!-- Quiz area -->
+  <div class="quiz-area" id="quizArea">
+    <div style="margin-bottom:16px;">
+      <button class="btn btn-secondary btn-sm" onclick="backToSelect()">
+        ← <span class="lang-en">Back</span><span class="lang-kz">Артқа</span>
+      </button>
+      <span id="quizTitle" style="font-family:var(--font-mono);font-size:14px;margin-left:12px;"></span>
+    </div>
+    <div class="quiz-progress">
+      <span>
+        <span class="lang-en">Question</span><span class="lang-kz">Сұрақ</span>
+        <strong id="qNum">1</strong> / <strong id="qTotal">4</strong>
+      </span>
+      <!-- 9. Нәтиже UI-де дұрыс көрсетіледі -->
+      <span id="qScore" style="color:var(--accent);font-weight:600;">0 pts</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div id="questionContainer"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-primary btn-sm" id="nextBtn" onclick="nextQuestion()" style="display:none;">
+        <span class="lang-en">Next</span><span class="lang-kz">Келесі</span> →
+      </button>
+    </div>
+  </div>
+
+  <!-- Flashcard area -->
+  <div class="flashcard-area" id="flashcardArea">
+    <div style="margin-bottom:16px;">
+      <button class="btn btn-secondary btn-sm" onclick="backToSelect()">
+        ← <span class="lang-en">Back</span><span class="lang-kz">Артқа</span>
+      </button>
+      <span id="fcTitle" style="font-family:var(--font-mono);font-size:14px;margin-left:12px;"></span>
+    </div>
+    <div class="quiz-progress">
+      <span>
+        <span class="lang-en">Card</span><span class="lang-kz">Карточка</span>
+        <strong id="fcNum">1</strong> / <strong id="fcTotal">4</strong>
+      </span>
+    </div>
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <h3 id="fcQuestion"></h3>
+      <div class="answer" id="fcAnswer"></div>
+      <p class="flip-hint">
+        <span class="lang-en">Click to reveal answer</span>
+        <span class="lang-kz">Жауапты көру үшін басыңыз</span>
       </p>
-      <div class="quiz-modes" id="modeButtons">
-        <button class="btn btn-primary btn-sm" onclick="setMode('test')">🎯 <span class="lang-en">Test Mode</span><span class="lang-kz">Тест режимі</span></button>
-        <button class="btn btn-secondary btn-sm" onclick="setMode('flashcard')">🃏 <span class="lang-en">Flashcards</span><span class="lang-kz">Карточкалар</span></button>
-      </div>
     </div>
- 
-    <div class="quiz-select" id="quizSelect">
-      <div class="quiz-card-grid" id="quizGrid"></div>
+    <div class="flashcard-nav">
+      <button class="btn btn-secondary btn-sm" onclick="prevCard()">
+        ← <span class="lang-en">Prev</span><span class="lang-kz">Алдыңғы</span>
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="nextCard()">
+        <span class="lang-en">Next</span><span class="lang-kz">Келесі</span> →
+      </button>
     </div>
- 
-    <div class="quiz-area" id="quizArea">
-      <div style="margin-bottom:16px;">
-        <button class="btn btn-secondary btn-sm" onclick="backToSelect()">← <span class="lang-en">Back</span><span class="lang-kz">Артқа</span></button>
-        <span id="quizTitle" style="font-family:var(--font-mono);font-size:14px;margin-left:12px;"></span>
-      </div>
-      <div class="quiz-progress">
-        <span><span class="lang-en">Question</span><span class="lang-kz">Сұрақ</span> <strong id="qNum">1</strong> / <strong id="qTotal">4</strong></span>
-        <span id="qScore" style="color:var(--accent);font-weight:600;">0 pts</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <div id="questionContainer"></div>
-      <div style="display:flex;justify-content:flex-end;margin-top:16px;">
-        <button class="btn btn-primary btn-sm" id="nextBtn" onclick="nextQuestion()" style="display:none;">
-          <span class="lang-en">Next</span><span class="lang-kz">Келесі</span> →
-        </button>
-      </div>
-    </div>
- 
-    <div class="flashcard-area" id="flashcardArea">
-      <div style="margin-bottom:16px;">
-        <button class="btn btn-secondary btn-sm" onclick="backToSelect()">← <span class="lang-en">Back</span><span class="lang-kz">Артқа</span></button>
-        <span id="fcTitle" style="font-family:var(--font-mono);font-size:14px;margin-left:12px;"></span>
-      </div>
-      <div class="quiz-progress">
-        <span><span class="lang-en">Card</span><span class="lang-kz">Карточка</span> <strong id="fcNum">1</strong> / <strong id="fcTotal">4</strong></span>
-      </div>
-      <div class="flashcard" id="flashcard" onclick="flipCard()">
-        <h3 id="fcQuestion"></h3>
-        <div class="answer" id="fcAnswer"></div>
-        <p class="flip-hint"><span class="lang-en">Click to reveal answer</span><span class="lang-kz">Жауапты көру үшін басыңыз</span></p>
-      </div>
-      <div class="flashcard-nav">
-        <button class="btn btn-secondary btn-sm" onclick="prevCard()">← <span class="lang-en">Prev</span><span class="lang-kz">Алдыңғы</span></button>
-        <button class="btn btn-primary btn-sm" onclick="nextCard()"><span class="lang-en">Next</span><span class="lang-kz">Келесі</span> →</button>
-      </div>
-    </div>
- 
-    <div class="quiz-result" id="quizResult" style="max-width:500px;margin:0 auto;">
-      <h2><span class="lang-en">MISSION <span style="color:var(--accent)">COMPLETE</span></span><span class="lang-kz">МИССИЯ <span style="color:var(--accent)">АЯҚТАЛДЫ</span></span></h2>
-      <div class="score-big" id="resultScore">0%</div>
-      <p style="color:var(--text-secondary);margin-bottom:24px;" id="resultText"></p>
-      <div style="display:flex;gap:12px;justify-content:center;">
-        <button class="btn btn-primary" onclick="retryQuiz()"><span class="lang-en">Retry</span><span class="lang-kz">Қайталау</span></button>
-        <button class="btn btn-secondary" onclick="backToSelect()"><span class="lang-en">All Quizzes</span><span class="lang-kz">Барлық тесттер</span></button>
-      </div>
-    </div>
-  </main>
+  </div>
 
-  <div id="footer-root"></div>
+  <!-- 9. ЕСЕПТЕУ ЛОГИКАСЫ — result -->
+  <div class="quiz-result" id="quizResult" style="max-width:500px;margin:0 auto;padding:24px;">
+    <h2>
+      <span class="lang-en">MISSION <span style="color:var(--accent)">COMPLETE</span></span>
+      <span class="lang-kz">МИССИЯ <span style="color:var(--accent)">АЯҚТАЛДЫ</span></span>
+    </h2>
+    <div class="score-big" id="resultScore">0%</div>
+    <p style="color:var(--text-secondary);margin-bottom:16px;" id="resultText"></p>
 
-  <script src="/js/main.js"></script>
-  <script>
-    let allQuizzes = [];
-    let allCourses = [];
-    let currentQuiz = null;
-    let currentMode = 'test';
-    let qIndex = 0;
-    let score = 0;
-    let answered = false;
-    let fcIndex = 0;
-    let userScores = {};
+    <!-- 9. UI-де дұрыс көрсету — детальді нәтиже -->
+    <div id="resultDetail" style="
+      background:var(--bg-card);border:1px solid var(--border-solid);
+      border-radius:10px;padding:16px;margin-bottom:20px;text-align:left;
+    "></div>
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      document.getElementById('header-root').innerHTML = getHeader('quiz');
-      document.getElementById('footer-root').innerHTML = getFooter();
-      initPage();
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button class="btn btn-primary" onclick="retryQuiz()">
+        <span class="lang-en">Retry</span><span class="lang-kz">Қайталау</span>
+      </button>
+      <button class="btn btn-secondary" onclick="backToSelect()">
+        <span class="lang-en">All Quizzes</span><span class="lang-kz">Барлық тесттер</span>
+      </button>
+    </div>
+  </div>
+</main>
 
+<div id="footer-root"></div>
+<script src="/js/main.js"></script>
+<script>
+  let allQuizzes  = [];
+  let allCourses  = [];
+  let currentQuiz = null;
+  let currentMode = 'test';
+  let qIndex      = 0;
+  let score       = 0;
+  let answered    = false;
+  let fcIndex     = 0;
+  let userScores  = {};
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('header-root').innerHTML = getHeader('quiz');
+    document.getElementById('footer-root').innerHTML = getFooter();
+    initPage();
+
+    // 12. SPINNER жүктеу кезінде
+    showSpinner();
+    try {
       const [quizRes, courseRes, scoreRes] = await Promise.all([
         fetch('/api/quizzes'),
         fetch('/api/courses'),
         fetch('/api/scores')
       ]);
-      allQuizzes = await quizRes.json();
-      allCourses = await courseRes.json();
+      allQuizzes  = await quizRes.json();
+      allCourses  = await courseRes.json();
       const scoresArr = await scoreRes.json();
       scoresArr.forEach(s => { userScores[s.courseId] = s; });
- 
-      const params = new URLSearchParams(window.location.search);
-      const cid = params.get('course');
-      if (cid) {
-        const quiz = allQuizzes.find(q => q.courseId === parseInt(cid));
-        if (quiz) { startQuiz(quiz.courseId); return; }
-      }
+    } catch (e) {
+      allQuizzes = []; allCourses = [];
+    }
+    hideSpinner();
 
-      renderQuizGrid();
+    // URL-ден course id алу
+    const params = new URLSearchParams(window.location.search);
+    const cid = params.get('course');
+    if (cid) {
+      const quiz = allQuizzes.find(q => q.courseId === parseInt(cid));
+      if (quiz) { startQuiz(quiz.courseId); return; }
+    }
+
+    // 15. PROGRESS — сақталған тест нәтижелерін оқу
+    const progress = getProgress();
+    if (progress.lastQuizCourse) {
+      showToast(
+        currentLang === 'kz'
+          ? `Соңғы тест: ${progress.lastQuizCourse}`
+          : `Last quiz: ${progress.lastQuizCourse}`,
+        'info'
+      );
+    }
+
+    renderQuizGrid();
+  });
+
+  function renderQuizGrid() {
+    const grid = document.getElementById('quizGrid');
+    grid.innerHTML = allQuizzes.map(q => {
+      const course = allCourses.find(c => c.id === q.courseId);
+      if (!course) return '';
+      const title = currentLang === 'kz' ? course.kz.title : course.en.title;
+      const sc = userScores[q.courseId];
+      const scoreBadge = sc
+        ? `<div class="score-badge">${sc.percentage}% ✦</div>`
+        : `<div class="score-badge" style="color:var(--text-muted)">—</div>`;
+      return `
+        <div class="quiz-card" onclick="startQuiz(${q.courseId})">
+          <div style="font-size:24px;margin-bottom:8px;">📝</div>
+          <h4>${title}</h4>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${q.questions.length} questions</div>
+          ${scoreBadge}
+        </div>`;
+    }).join('');
+    setLanguage(currentLang);
+  }
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('#modeButtons .btn').forEach((b, i) => {
+      b.className = i === (mode === 'test' ? 0 : 1) ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+    });
+    showToast(
+      currentLang === 'kz'
+        ? (mode==='test' ? 'Тест режимі' : 'Карточка режимі')
+        : (mode==='test' ? 'Test mode' : 'Flashcard mode'),
+      'info'
+    );
+  }
+
+  function startQuiz(courseId) {
+    currentQuiz = allQuizzes.find(q => q.courseId === courseId);
+    if (!currentQuiz) return;
+    const course = allCourses.find(c => c.id === courseId);
+    const title = course ? (currentLang === 'kz' ? course.kz.title : course.en.title) : '';
+
+    // 15. PROGRESS — бастаған тестті сақтау
+    saveProgress({ lastQuizCourse: title, lastQuizId: courseId });
+
+    document.getElementById('quizSelect').style.display  = 'none';
+    document.getElementById('quizResult').style.display  = 'none';
+
+    if (currentMode === 'test') {
+      qIndex = 0; score = 0; answered = false;
+      document.getElementById('quizArea').style.display       = 'block';
+      document.getElementById('flashcardArea').style.display  = 'none';
+      document.getElementById('quizTitle').textContent        = title;
+      document.getElementById('qTotal').textContent           = currentQuiz.questions.length;
+      showQuestion();
+      showToast(currentLang === 'kz' ? 'Тест басталды! 🎯' : 'Quiz started! 🎯', 'success');
+    } else {
+      fcIndex = 0;
+      document.getElementById('flashcardArea').style.display  = 'block';
+      document.getElementById('quizArea').style.display       = 'none';
+      document.getElementById('fcTitle').textContent          = title;
+      document.getElementById('fcTotal').textContent          = currentQuiz.questions.length;
+      showFlashcard();
+      showToast(currentLang === 'kz' ? 'Карточкалар ашылды 🃏' : 'Flashcards opened 🃏', 'info');
+    }
+    setLanguage(currentLang);
+  }
+
+  function showQuestion() {
+    const q = currentQuiz.questions[qIndex];
+    const qText = currentLang === 'kz' ? q.kz : q.en;
+    answered = false;
+
+    document.getElementById('qNum').textContent          = qIndex + 1;
+    document.getElementById('qScore').textContent        = score + ' pts';
+    document.getElementById('nextBtn').style.display     = 'none';
+
+    // 9. Прогресс бар — автоматты есептеледі
+    const pct = (qIndex / currentQuiz.questions.length) * 100;
+    document.getElementById('progressFill').style.width  = pct + '%';
+
+    const letters = ['A', 'B', 'C', 'D'];
+    document.getElementById('questionContainer').innerHTML = `
+      <div class="quiz-question">
+        <h3>${qText}</h3>
+        <div class="quiz-options">
+          ${q.options.map((opt, i) => `
+            <div class="quiz-option" onclick="selectAnswer(${i}, ${q.correct})">
+              <span class="option-letter">${letters[i]}</span>
+              <span>${opt}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  }
+
+  function selectAnswer(idx, correct) {
+    if (answered) return;
+    answered = true;
+
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach((o, i) => {
+      if (i === correct) o.classList.add('correct');
+      if (i === idx && idx !== correct) o.classList.add('wrong');
+      o.style.pointerEvents = 'none';
     });
 
-    function renderQuizGrid() {
-      const grid = document.getElementById('quizGrid');
-      grid.innerHTML = allQuizzes.map(q => {
-        const course = allCourses.find(c => c.id === q.courseId);
-        if (!course) return '';
-        const title = currentLang === 'kz' ? course.kz.title : course.en.title;
-        const sc = userScores[q.courseId];
-        const scoreBadge = sc ? `<div class="score-badge">${sc.percentage}% ✦</div>` : '<div class="score-badge" style="color:var(--text-muted)">—</div>';
-        return `
-          <div class="quiz-card" onclick="startQuiz(${q.courseId})">
-            <div style="font-size:24px;margin-bottom:8px;">📝</div>
-            <h4>${title}</h4>
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${q.questions.length} questions</div>
-            ${scoreBadge}
-          </div>`;
-      }).join('');
-      setLanguage(currentLang);
+    if (idx === correct) {
+      score++;
+      showToast(currentLang === 'kz' ? '✅ Дұрыс!' : '✅ Correct!', 'success');
+    } else {
+      showToast(currentLang === 'kz' ? '❌ Қате!' : '❌ Wrong!', 'error');
     }
 
-    function setMode(mode) {
-      currentMode = mode;
-      document.querySelectorAll('#modeButtons .btn').forEach((b, i) => {
-        b.className = i === (mode === 'test' ? 0 : 1) ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
-      });
+    document.getElementById('qScore').textContent = score + ' pts';
+    document.getElementById('nextBtn').style.display = 'flex';
+    setLanguage(currentLang);
+  }
+
+  function nextQuestion() {
+    qIndex++;
+    if (qIndex >= currentQuiz.questions.length) {
+      showResult();
+      return;
     }
+    showQuestion();
+  }
 
-    function startQuiz(courseId) {
-      currentQuiz = allQuizzes.find(q => q.courseId === courseId);
-      if (!currentQuiz) return;
-      const course = allCourses.find(c => c.id === courseId);
-      const title = course ? (currentLang === 'kz' ? course.kz.title : course.en.title) : '';
+  // 9. ЕСЕПТЕУ ЛОГИКАСЫ — нәтиже автоматты есептеледі
+  async function showResult() {
+    document.getElementById('quizArea').style.display  = 'none';
+    document.getElementById('quizResult').style.display = 'block';
 
-      document.getElementById('quizSelect').style.display = 'none';
-      document.getElementById('quizResult').style.display = 'none';
+    const total = currentQuiz.questions.length;
+    const pct   = Math.round((score / total) * 100);
 
-      if (currentMode === 'test') {
-        qIndex = 0; score = 0; answered = false;
-        document.getElementById('quizArea').style.display = 'block';
-        document.getElementById('flashcardArea').style.display = 'none';
-        document.getElementById('quizTitle').textContent = title;
-        document.getElementById('qTotal').textContent = currentQuiz.questions.length;
-        showQuestion();
-      } else {
-        fcIndex = 0;
-        document.getElementById('flashcardArea').style.display = 'block';
-        document.getElementById('quizArea').style.display = 'none';
-        document.getElementById('fcTitle').textContent = title;
-        document.getElementById('fcTotal').textContent = currentQuiz.questions.length;
-        showFlashcard();
-      }
-      setLanguage(currentLang);
-    }
+    // 9. UI-де дұрыс көрсету
+    document.getElementById('resultScore').textContent = pct + '%';
+    document.getElementById('progressFill').style.width = '100%';
 
-    function showQuestion() {
-      const q = currentQuiz.questions[qIndex];
-      const qText = currentLang === 'kz' ? q.kz : q.en;
-      answered = false;
-      document.getElementById('qNum').textContent = qIndex + 1;
-      document.getElementById('qScore').textContent = score + ' pts';
-      document.getElementById('progressFill').style.width = ((qIndex / currentQuiz.questions.length) * 100) + '%';
-      document.getElementById('nextBtn').style.display = 'none';
+    const grade = pct >= 80 ? '🏆 S' : pct >= 60 ? '⭐ A' : pct >= 40 ? '👍 B' : '📚 C';
+    const msg = currentLang === 'kz'
+      ? `${total} сұрақтан ${score} дұрыс жауап`
+      : `${score} correct out of ${total} questions`;
+    document.getElementById('resultText').textContent = msg;
 
-      const letters = ['A', 'B', 'C', 'D'];
-      document.getElementById('questionContainer').innerHTML = `
-        <div class="quiz-question">
-          <h3>${qText}</h3>
-          <div class="quiz-options">
-            ${q.options.map((opt, i) => `
-              <div class="quiz-option" onclick="selectAnswer(${i}, ${q.correct})">
-                <span class="option-letter">${letters[i]}</span>
-                <span>${opt}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>`;
-    }
+    // Детальді нәтиже
+    document.getElementById('resultDetail').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="text-align:center;padding:12px;background:var(--bg-secondary);border-radius:8px;">
+          <div style="font-size:28px;font-weight:700;color:var(--accent);">${score}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${currentLang==='kz'?'ДҰРЫС':'CORRECT'}</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:var(--bg-secondary);border-radius:8px;">
+          <div style="font-size:28px;font-weight:700;color:var(--danger);">${total - score}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${currentLang==='kz'?'ҚАТЕ':'WRONG'}</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:var(--bg-secondary);border-radius:8px;grid-column:span 2;">
+          <div style="font-size:22px;font-weight:700;color:var(--gold);">${grade}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${currentLang==='kz'?'БАҒА':'GRADE'}</div>
+        </div>
+      </div>
+    `;
 
-    function selectAnswer(idx, correct) {
-      if (answered) return;
-      answered = true;
-      const options = document.querySelectorAll('.quiz-option');
-      options.forEach((o, i) => {
-        if (i === correct) o.classList.add('correct');
-        if (i === idx && idx !== correct) o.classList.add('wrong');
-        o.style.pointerEvents = 'none';
-      });
-      if (idx === correct) score++;
-      document.getElementById('qScore').textContent = score + ' pts';
-      document.getElementById('nextBtn').style.display = 'flex';
-      setLanguage(currentLang);
-    }
+    // 15. PROGRESS — нәтижені сақтау (LocalStorage)
+    saveProgress({
+      lastQuizScore:   pct,
+      lastQuizGrade:   grade,
+      quizCompleted:   true,
+      [`quiz_${currentQuiz.courseId}`]: pct
+    });
 
-    function nextQuestion() {
-      qIndex++;
-      if (qIndex >= currentQuiz.questions.length) {
-        showResult();
-        return;
-      }
-      showQuestion();
-    }
+    showToast(
+      currentLang === 'kz' ? `Нәтиже: ${pct}% ${grade}` : `Score: ${pct}% ${grade}`,
+      pct >= 60 ? 'success' : 'warning'
+    );
 
-    async function showResult() {
-      document.getElementById('quizArea').style.display = 'none';
-      document.getElementById('quizResult').style.display = 'block';
-      const pct = Math.round((score / currentQuiz.questions.length) * 100);
-      document.getElementById('resultScore').textContent = pct + '%';
-      document.getElementById('resultText').textContent =
-        currentLang === 'kz'
-          ? `${currentQuiz.questions.length} сұрақтан ${score} дұрыс`
-          : `${score} correct out of ${currentQuiz.questions.length}`;
-      document.getElementById('progressFill').style.width = '100%';
-
-      // Save score
+    // API-ға сақтау
+    try {
       const user = getUser();
       const body = {
-        userId: user ? user.id : 0,
+        userId:   user ? user.id : 0,
         userName: user ? user.name : 'Guest',
         courseId: currentQuiz.courseId,
         score,
-        total: currentQuiz.questions.length
+        total
       };
-      const res = await fetch('/api/scores', {
+      const res  = await fetch('/api/scores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
       const data = await res.json();
       if (data.entry) userScores[data.entry.courseId] = data.entry;
-      setLanguage(currentLang);
-    }
+    } catch (e) { /* silent */ }
 
-    function retryQuiz() {
-      if (currentQuiz) startQuiz(currentQuiz.courseId);
-    }
+    setLanguage(currentLang);
+  }
 
-    function backToSelect() {
-      document.getElementById('quizArea').style.display = 'none';
-      document.getElementById('flashcardArea').style.display = 'none';
-      document.getElementById('quizResult').style.display = 'none';
-      document.getElementById('quizSelect').style.display = '';
-      renderQuizGrid();
+  function retryQuiz() {
+    if (currentQuiz) {
+      showToast(currentLang === 'kz' ? 'Тест қайта басталды!' : 'Quiz restarted!', 'info');
+      startQuiz(currentQuiz.courseId);
     }
- 
-    function showFlashcard() {
-      const q = currentQuiz.questions[fcIndex];
-      document.getElementById('fcNum').textContent = fcIndex + 1;
-      document.getElementById('fcQuestion').textContent = currentLang === 'kz' ? q.kz : q.en;
-      document.getElementById('fcAnswer').textContent = q.options[q.correct];
-      document.getElementById('flashcard').classList.remove('flipped');
-      setLanguage(currentLang);
-    }
+  }
 
-    function flipCard() {
-      document.getElementById('flashcard').classList.toggle('flipped');
-    }
+  function backToSelect() {
+    document.getElementById('quizArea').style.display       = 'none';
+    document.getElementById('flashcardArea').style.display  = 'none';
+    document.getElementById('quizResult').style.display     = 'none';
+    document.getElementById('quizSelect').style.display     = '';
+    renderQuizGrid();
+  }
 
-    function nextCard() {
-      if (fcIndex < currentQuiz.questions.length - 1) { fcIndex++; showFlashcard(); }
-    }
+  // Flashcard functions
+  function showFlashcard() {
+    const q = currentQuiz.questions[fcIndex];
+    document.getElementById('fcNum').textContent      = fcIndex + 1;
+    document.getElementById('fcQuestion').textContent = currentLang === 'kz' ? q.kz : q.en;
+    document.getElementById('fcAnswer').textContent   = q.options[q.correct];
+    document.getElementById('flashcard').classList.remove('flipped');
+    setLanguage(currentLang);
+  }
 
-    function prevCard() {
-      if (fcIndex > 0) { fcIndex--; showFlashcard(); }
+  function flipCard() {
+    document.getElementById('flashcard').classList.toggle('flipped');
+    showToast(currentLang === 'kz' ? 'Жауап көрсетілді' : 'Answer revealed', 'info');
+  }
+
+  function nextCard() {
+    if (fcIndex < currentQuiz.questions.length - 1) {
+      fcIndex++;
+      showFlashcard();
+    } else {
+      showToast(currentLang === 'kz' ? 'Соңғы карточка' : 'Last card', 'warning');
     }
-  </script>
+  }
+
+  function prevCard() {
+    if (fcIndex > 0) {
+      fcIndex--;
+      showFlashcard();
+    }
+  }
+</script>
 </body>
 </html>
