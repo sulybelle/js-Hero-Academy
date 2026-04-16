@@ -41,7 +41,6 @@
 
     <div class="form-group">
       <label><span class="lang-en">Password</span><span class="lang-kz">Пароль</span></label>
-      
       <div class="pass-wrap">
         <input type="password" id="loginPassword" placeholder="••••••">
         <button type="button" class="pass-toggle" onclick="togglePass('loginPassword', this)" title="Show/Hide">👁</button>
@@ -74,28 +73,22 @@
 
     document.getElementById('loginEmail').addEventListener('input',    validateEmail);
     document.getElementById('loginPassword').addEventListener('input', validatePass);
-
-    document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+    document.getElementById('loginPassword').addEventListener('keydown', e => {
       if (e.key === 'Enter') submitLogin();
     });
-  }); 
+  });
 
   function togglePass(inputId, btn) {
     const input = document.getElementById(inputId);
-    if (input.type === 'password') {
-      input.type = 'text';
-      btn.textContent = '🙈';
-    } else {
-      input.type = 'password';
-      btn.textContent = '👁';
-    }
+    if (input.type === 'password') { input.type = 'text';     btn.textContent = '🙈'; }
+    else                           { input.type = 'password'; btn.textContent = '👁'; }
   }
- 
+
   function setFieldState(inputId, errId, isValid, msg) {
     const input = document.getElementById(inputId);
     const err   = document.getElementById(errId);
-    input.classList.toggle('input-error',   !isValid);
-    input.classList.toggle('input-success',  isValid);
+    input.classList.toggle('input-error',  !isValid);
+    input.classList.toggle('input-success', isValid);
     err.textContent = isValid ? '' : msg;
     return isValid;
   }
@@ -112,19 +105,30 @@
   function validatePass() {
     const v  = document.getElementById('loginPassword').value;
     const kz = currentLang === 'kz';
-    if (!v)       return setFieldState('loginPassword','passErr', false, kz?'Пароль енгізіңіз':'Enter password');
+    if (!v)           return setFieldState('loginPassword','passErr', false, kz?'Пароль енгізіңіз':'Enter password');
     if (v.length < 6) return setFieldState('loginPassword','passErr', false, kz?'Кемінде 6 таңба':'Min 6 characters');
     return setFieldState('loginPassword','passErr', true, '');
   }
 
   async function submitLogin() {
     hide('alertError'); hide('alertSuccess');
-    if (!validateEmail() | !validatePass()) return; // show both errors
+    if (!validateEmail() | !validatePass()) return;
 
     showSpinner();
     const email    = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
-
+ 
+    const lsResult = loginFromLS(email, password);
+    if (lsResult.success) {
+      hideSpinner();
+       localStorage.setItem('jsha_user', JSON.stringify(lsResult.user));
+      localStorage.setItem('jsha_last_email', JSON.stringify(email));
+      show('alertSuccess', currentLang === 'kz' ? '✅ Сәтті кірдіңіз!' : '✅ Logged in!');
+      showToast(currentLang === 'kz' ? 'Сәтті кірдіңіз!' : 'Welcome back!', 'success');
+      setTimeout(() => window.location.href = '/courses', 1000);
+      return;
+    }
+ 
     try {
       const res  = await fetch('/api/login', {
         method: 'POST',
@@ -139,8 +143,7 @@
         showToast(data.error, 'error');
         return;
       }
-
-      // 2. LOCAL STORAGE — деректер сақтау
+ 
       localStorage.setItem('jsha_user', JSON.stringify(data.user));
       localStorage.setItem('jsha_last_email', JSON.stringify(email));
 
@@ -149,15 +152,15 @@
       setTimeout(() => window.location.href = '/courses', 1000);
 
     } catch {
-      hideSpinner();
-      show('alertError', 'Network error');
-      showToast('Network error', 'error');
+      hideSpinner(); 
+      show('alertError', lsResult.error || 'Network error');
+      showToast(lsResult.error || 'Network error', 'error');
     }
   }
 
   function show(id, msg) {
     const el = document.getElementById(id);
-    el.textContent = msg;
+    el.textContent  = msg;
     el.style.display = 'block';
   }
   function hide(id) {

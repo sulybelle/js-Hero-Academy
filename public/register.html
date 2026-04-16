@@ -6,80 +6,38 @@
   <title>Register — JS Heroes Academy</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-     .steps-indicator {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      margin-bottom: 28px;
+    .steps-indicator {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; margin-bottom: 28px;
     }
     .step-dot {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      background: var(--bg-primary);
-      border: 2px solid var(--border-solid);
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bg-primary); border: 2px solid var(--border-solid);
       color: var(--text-muted);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 13px;
-      transition: all 0.3s;
+      font-weight: 700; font-size: 13px; transition: all 0.3s;
     }
-    .step-dot.active  { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-    .step-dot.done    { border-color: var(--success); background: var(--success); color: #fff; }
-    .step-line {
-      flex: 1; height: 2px;
-      background: var(--border-solid);
-      max-width: 48px;
-    }
-
+    .step-dot.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .step-dot.done   { border-color: var(--success); background: var(--success); color: #fff; }
+    .step-line { flex: 1; height: 2px; background: var(--border-solid); max-width: 48px; }
     .form-step { display: none; }
     .form-step.active { display: block; }
- 
-    .form-group input.input-error   { border-color: var(--danger) !important; }
+    .form-group input.input-error   { border-color: var(--danger)  !important; }
     .form-group input.input-success { border-color: var(--success) !important; }
-    .field-error {
-      display: block;
-      font-size: 11px;
-      color: var(--danger);
-      margin-top: 4px;
-      min-height: 16px;
-    }
-    .field-success {
-      display: block;
-      font-size: 11px;
-      color: var(--success);
-      margin-top: 4px;
-    }
- 
-    .pass-wrap {
-      position: relative;
-    }
-    .pass-wrap input {
-      padding-right: 44px !important;
-    }
+    .field-error { display:block; font-size:11px; color:var(--danger); margin-top:4px; min-height:16px; }
+    .pass-wrap { position: relative; }
+    .pass-wrap input { padding-right: 44px !important; }
     .pass-toggle {
-      position: absolute;
-      right: 12px; top: 50%;
-      transform: translateY(-50%);
-      background: none; border: none;
-      cursor: pointer; font-size: 16px;
-      color: var(--text-muted);
-      padding: 0;
-      line-height: 1;
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 16px;
+      color: var(--text-muted); padding: 0; line-height: 1;
     }
     .pass-toggle:hover { color: var(--accent); }
- 
-    .step-nav {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
+    .step-nav { display: flex; gap: 10px; margin-top: 20px; }
     .step-nav button { flex: 1; }
- 
     .summary-item {
       display: flex; justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border-solid);
-      font-size: 14px;
+      padding: 8px 0; border-bottom: 1px solid var(--border-solid); font-size: 14px;
     }
     .summary-item span:first-child { color: var(--text-secondary); }
     .summary-item span:last-child  { font-weight: 600; }
@@ -95,7 +53,7 @@
       <span class="lang-en">Join the academy and start learning</span>
       <span class="lang-kz">Академияға тіркеліп, оқуды бастаңыз</span>
     </p>
- 
+
     <div class="steps-indicator">
       <div class="step-dot active" id="dot1">1</div>
       <div class="step-line"></div>
@@ -106,25 +64,23 @@
 
     <div class="alert alert-error"   id="alertError"></div>
     <div class="alert alert-success" id="alertSuccess"></div>
- 
+
+    <!-- STEP 1 -->
     <div class="form-step active" id="step1">
       <h4 style="font-size:13px;color:var(--accent);letter-spacing:1px;margin-bottom:16px;">
         <span class="lang-en">STEP 1 — Personal Info</span>
         <span class="lang-kz">1-ҚАДАМ — Жеке мәліметтер</span>
       </h4>
-
       <div class="form-group">
         <label><span class="lang-en">Full Name</span><span class="lang-kz">Аты-жөні</span></label>
         <input type="text" id="regName" placeholder="Айбек Серікұлы">
         <span class="field-error" id="nameErr"></span>
       </div>
-
       <div class="form-group">
         <label><span class="lang-en">Phone</span><span class="lang-kz">Телефон</span></label>
         <input type="tel" id="regPhone" placeholder="+7 700 000 00 00">
         <span class="field-error" id="phoneErr"></span>
       </div>
-
       <div class="step-nav">
         <button class="btn btn-primary" onclick="goStep(2)">
           <span class="lang-en">Next</span><span class="lang-kz">Келесі</span> →
@@ -137,13 +93,11 @@
         <span class="lang-en">STEP 2 — Account</span>
         <span class="lang-kz">2-ҚАДАМ — Аккаунт</span>
       </h4>
-
       <div class="form-group">
         <label>Email</label>
         <input type="email" id="regEmail" placeholder="email@example.com">
         <span class="field-error" id="emailErr"></span>
       </div>
-
       <div class="form-group">
         <label><span class="lang-en">Password</span><span class="lang-kz">Пароль</span></label>
         <div class="pass-wrap">
@@ -152,7 +106,6 @@
         </div>
         <span class="field-error" id="passErr"></span>
       </div>
-
       <div class="form-group">
         <label><span class="lang-en">Confirm Password</span><span class="lang-kz">Парольді растаңыз</span></label>
         <div class="pass-wrap">
@@ -161,7 +114,6 @@
         </div>
         <span class="field-error" id="confirmErr"></span>
       </div>
-
       <div class="step-nav">
         <button class="btn btn-secondary" onclick="goStep(1)">
           ← <span class="lang-en">Back</span><span class="lang-kz">Артқа</span>
@@ -177,9 +129,7 @@
         <span class="lang-en">STEP 3 — Confirm</span>
         <span class="lang-kz">3-ҚАДАМ — Растау</span>
       </h4>
-
       <div id="summaryBox" style="margin-bottom:20px;"></div>
-
       <div class="step-nav">
         <button class="btn btn-secondary" onclick="goStep(2)">
           ← <span class="lang-en">Back</span><span class="lang-kz">Артқа</span>
@@ -208,7 +158,6 @@
     document.getElementById('footer-root').innerHTML = getFooter();
     initPage();
 
-    // Real-time validation
     document.getElementById('regName').addEventListener('input',     () => validateName(false));
     document.getElementById('regPhone').addEventListener('input',    () => validatePhone(false));
     document.getElementById('regEmail').addEventListener('input',    () => validateEmail(false));
@@ -216,21 +165,14 @@
     document.getElementById('regConfirm').addEventListener('input',  () => validateConfirm(false));
   });
 
-   function togglePass(inputId, btn) {
+  function togglePass(inputId, btn) {
     const input = document.getElementById(inputId);
-    if (input.type === 'password') {
-      input.type = 'text';
-      btn.textContent = '🙈';
-    } else {
-      input.type = 'password';
-      btn.textContent = '👁';
-    }
+    if (input.type === 'password') { input.type = 'text';     btn.textContent = '🙈'; }
+    else                           { input.type = 'password'; btn.textContent = '👁'; }
   }
 
-   function goStep(n) {
-    if (n > currentStep) {
-      if (!validateStep(currentStep)) return;
-    }
+  function goStep(n) {
+    if (n > currentStep && !validateStep(currentStep)) return;
     showStep(n);
   }
 
@@ -259,65 +201,55 @@
     `;
   }
 
-   function setFieldState(inputId, errId, isValid, msg) {
+  function setFieldState(inputId, errId, isValid, msg) {
     const input = document.getElementById(inputId);
     const err   = document.getElementById(errId);
-    input.classList.toggle('input-error',   !isValid);
-    input.classList.toggle('input-success',  isValid);
+    input.classList.toggle('input-error',  !isValid);
+    input.classList.toggle('input-success', isValid);
     err.textContent = isValid ? '' : msg;
     return isValid;
   }
 
-  function validateName(strict = true) {
-    const v = document.getElementById('regName').value.trim();
-    const kz = currentLang === 'kz';
-    if (!v)       return setFieldState('regName','nameErr', false, kz?'Атыңызды енгізіңіз':'Please enter your name');
-    if (v.length < 2) return setFieldState('regName','nameErr', false, kz?'Кемінде 2 таңба':'Min 2 characters');
-    return setFieldState('regName','nameErr', true, '');
+  function validateName()    {
+    const v = document.getElementById('regName').value.trim(), kz = currentLang==='kz';
+    if (!v)         return setFieldState('regName','nameErr',false, kz?'Атыңызды енгізіңіз':'Please enter your name');
+    if (v.length<2) return setFieldState('regName','nameErr',false, kz?'Кемінде 2 таңба':'Min 2 characters');
+    return setFieldState('regName','nameErr',true,'');
   }
-
-  function validatePhone(strict = true) {
-    const v = document.getElementById('regPhone').value.trim();
-    const kz = currentLang === 'kz';
+  function validatePhone()   {
+    const v = document.getElementById('regPhone').value.trim(), kz = currentLang==='kz';
     const re = /^\+?[\d\s\-()]{7,15}$/;
-    if (!v)       return setFieldState('regPhone','phoneErr', false, kz?'Телефон нөмірін енгізіңіз':'Enter phone number');
-    if (!re.test(v)) return setFieldState('regPhone','phoneErr', false, kz?'Нөмір дұрыс емес':'Invalid phone number');
-    return setFieldState('regPhone','phoneErr', true, '');
+    if (!v)         return setFieldState('regPhone','phoneErr',false, kz?'Телефон нөмірін енгізіңіз':'Enter phone number');
+    if (!re.test(v))return setFieldState('regPhone','phoneErr',false, kz?'Нөмір дұрыс емес':'Invalid phone number');
+    return setFieldState('regPhone','phoneErr',true,'');
   }
-
-  function validateEmail(strict = true) {
-    const v = document.getElementById('regEmail').value.trim();
-    const kz = currentLang === 'kz';
+  function validateEmail()   {
+    const v = document.getElementById('regEmail').value.trim(), kz = currentLang==='kz';
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!v)       return setFieldState('regEmail','emailErr', false, kz?'Email енгізіңіз':'Enter your email');
-    if (!re.test(v)) return setFieldState('regEmail','emailErr', false, kz?'Email форматы дұрыс емес':'Invalid email format');
-    return setFieldState('regEmail','emailErr', true, '');
+    if (!v)         return setFieldState('regEmail','emailErr',false, kz?'Email енгізіңіз':'Enter your email');
+    if (!re.test(v))return setFieldState('regEmail','emailErr',false, kz?'Email форматы дұрыс емес':'Invalid email format');
+    return setFieldState('regEmail','emailErr',true,'');
   }
-
-  function validatePass(strict = true) {
-    const v = document.getElementById('regPassword').value;
-    const kz = currentLang === 'kz';
-    if (!v)       return setFieldState('regPassword','passErr', false, kz?'Пароль енгізіңіз':'Enter password');
-    if (v.length < 6) return setFieldState('regPassword','passErr', false, kz?'Кемінде 6 таңба':'Min 6 characters');
-    return setFieldState('regPassword','passErr', true, '');
+  function validatePass()    {
+    const v = document.getElementById('regPassword').value, kz = currentLang==='kz';
+    if (!v)         return setFieldState('regPassword','passErr',false, kz?'Пароль енгізіңіз':'Enter password');
+    if (v.length<6) return setFieldState('regPassword','passErr',false, kz?'Кемінде 6 таңба':'Min 6 characters');
+    return setFieldState('regPassword','passErr',true,'');
   }
-
-  function validateConfirm(strict = true) {
-    const v  = document.getElementById('regConfirm').value;
-    const p  = document.getElementById('regPassword').value;
-    const kz = currentLang === 'kz';
-    if (!v)    return setFieldState('regConfirm','confirmErr', false, kz?'Парольді растаңыз':'Confirm your password');
-    if (v !== p) return setFieldState('regConfirm','confirmErr', false, kz?'Парольдер сәйкес келмейді':'Passwords do not match');
-    return setFieldState('regConfirm','confirmErr', true, '');
+  function validateConfirm() {
+    const v = document.getElementById('regConfirm').value;
+    const p = document.getElementById('regPassword').value;
+    const kz = currentLang==='kz';
+    if (!v)    return setFieldState('regConfirm','confirmErr',false, kz?'Парольді растаңыз':'Confirm your password');
+    if (v!==p) return setFieldState('regConfirm','confirmErr',false, kz?'Парольдер сәйкес келмейді':'Passwords do not match');
+    return setFieldState('regConfirm','confirmErr',true,'');
   }
-
   function validateStep(step) {
-    if (step === 1) return validateName() && validatePhone();
-    if (step === 2) return validateEmail() && validatePass() && validateConfirm();
+    if (step===1) return validateName() && validatePhone();
+    if (step===2) return validateEmail() && validatePass() && validateConfirm();
     return true;
   }
 
- 
   async function submitRegister() {
     hide('alertError'); hide('alertSuccess');
     const btn = document.getElementById('submitBtn');
@@ -331,7 +263,18 @@
       email:    document.getElementById('regEmail').value.trim(),
       password: document.getElementById('regPassword').value
     };
-
+ 
+    const lsResult = saveUserToLS(body);
+    if (!lsResult.success) {
+       hideSpinner();
+      show('alertError', lsResult.error);
+      showToast(lsResult.error, 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<span class="lang-en">Register ✦</span><span class="lang-kz">Тіркелу ✦</span>';
+      setLanguage(currentLang);
+      return;
+    }
+ 
     try {
       const res  = await fetch('/api/register', {
         method: 'POST',
@@ -342,33 +285,30 @@
       hideSpinner();
 
       if (!res.ok) {
-        show('alertError', data.error);
-        showToast(data.error, 'error');
-        btn.disabled = false;
-        btn.innerHTML = '<span class="lang-en">Register ✦</span><span class="lang-kz">Тіркелу ✦</span>';
-        setLanguage(currentLang);
-        return;
+         console.warn('Server register error (saved to LS anyway):', data.error);
       }
 
-       localStorage.setItem('jsha_user', JSON.stringify(data.user));
+       const sessionUser = (res.ok && data.user) ? data.user : lsResult.user;
+      localStorage.setItem('jsha_user', JSON.stringify(sessionUser));
       saveProgress({ registered: true, percent: 10 });
 
-      show('alertSuccess', currentLang === 'kz' ? '✅ Сәтті тіркелдіңіз!' : '✅ Registered successfully!');
-      showToast(currentLang === 'kz' ? 'Тіркелу сәтті!' : 'Registration successful!', 'success');
-
+      show('alertSuccess', currentLang==='kz' ? '✅ Сәтті тіркелдіңіз!' : '✅ Registered successfully!');
+      showToast(currentLang==='kz' ? 'Тіркелу сәтті!' : 'Registration successful!', 'success');
       setTimeout(() => window.location.href = '/courses', 1400);
+
     } catch {
-      hideSpinner();
-      show('alertError', 'Network error');
-      showToast('Network error', 'error');
-      btn.disabled = false;
-      setLanguage(currentLang);
+       hideSpinner();
+      localStorage.setItem('jsha_user', JSON.stringify(lsResult.user));
+      saveProgress({ registered: true, percent: 10 });
+      show('alertSuccess', currentLang==='kz' ? '✅ Сәтті тіркелдіңіз! (офлайн)' : '✅ Registered (offline)!');
+      showToast(currentLang==='kz' ? 'Тіркелу сәтті!' : 'Registration successful!', 'success');
+      setTimeout(() => window.location.href = '/courses', 1400);
     }
   }
 
   function show(id, msg) {
     const el = document.getElementById(id);
-    el.textContent = msg;
+    el.textContent   = msg;
     el.style.display = 'block';
   }
   function hide(id) {

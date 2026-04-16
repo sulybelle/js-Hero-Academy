@@ -12,23 +12,32 @@
   <main>
     <section>
       <div class="course-detail-page" id="courseDetail">
-        <a href="/courses" style="color:var(--accent);font-size:13px;display:inline-block;margin-bottom:20px;">← <span class="lang-en">Back to Courses</span><span class="lang-kz">Курстарға оралу</span></a>
+        <a href="/courses" style="color:var(--accent);font-size:13px;display:inline-block;margin-bottom:20px;">
+          ← <span class="lang-en">Back to Courses</span><span class="lang-kz">Курстарға оралу</span>
+        </a>
         <div id="courseContent"><p style="color:var(--text-muted)">Loading...</p></div>
       </div>
     </section>
- 
+
     <section>
       <div class="course-detail-page">
         <div class="section-header" style="text-align:left;">
-          <h2><span class="lang-en">LESSON <span>COMMENTS</span></span><span class="lang-kz">САБАҚ <span>ПІКІРЛЕРІ</span></span></h2>
+          <h2>
+            <span class="lang-en">LESSON <span>COMMENTS</span></span>
+            <span class="lang-kz">САБАҚ <span>ПІКІРЛЕРІ</span></span>
+          </h2>
         </div>
+ 
         <div id="commentsGrid" class="reviews-grid"></div>
+ 
         <div class="review-form mt-24" id="commentForm">
           <h4 style="margin-bottom:12px;font-size:15px;">
             <span class="lang-en">Leave a Comment</span><span class="lang-kz">Пікір қалдыру</span>
           </h4>
           <div class="alert alert-success" id="commentSuccess"></div>
-          <input type="text" id="commentName" class="search-input" style="margin-bottom:10px;width:100%;font-family:var(--font-body);" placeholder="Your name / Сіздің атыңыз">
+          <input type="text" id="commentName" class="search-input"
+            style="margin-bottom:10px;width:100%;font-family:var(--font-body);"
+            placeholder="Your name / Сіздің атыңыз">
           <div class="star-select" id="commentStarSelect">
             <span onclick="selectCommentStar(1)">★</span>
             <span onclick="selectCommentStar(2)">★</span>
@@ -36,7 +45,11 @@
             <span onclick="selectCommentStar(4)">★</span>
             <span onclick="selectCommentStar(5)">★</span>
           </div>
-          <textarea id="commentText" placeholder="Write a comment... / Пікір жазыңыз..." style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border-solid);background:var(--bg-primary);color:var(--text);font-family:var(--font-body);font-size:14px;resize:vertical;min-height:80px;"></textarea>
+          <textarea id="commentText"
+            placeholder="Write a comment... / Пікір жазыңыз..."
+            style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border-solid);
+                   background:var(--bg-primary);color:var(--text);font-family:var(--font-body);
+                   font-size:14px;resize:vertical;min-height:80px;"></textarea>
           <button class="btn btn-primary btn-sm mt-16" onclick="submitComment()">
             <span class="lang-en">Submit</span><span class="lang-kz">Жіберу</span>
           </button>
@@ -46,7 +59,6 @@
   </main>
 
   <div id="footer-root"></div>
-
   <script src="/js/main.js"></script>
   <script>
     let courseId;
@@ -59,21 +71,40 @@
       selectCommentStar(5);
 
       courseId = parseInt(window.location.pathname.split('/').pop());
-      const res = await fetch('/api/courses');
+
+      const res     = await fetch('/api/courses');
       const courses = await res.json();
-      const course = courses.find(c => c.id === courseId);
+      const course  = courses.find(c => c.id === courseId);
 
       if (!course) {
-        document.getElementById('courseContent').innerHTML = '<p style="color:var(--text-muted)">Course not found.</p>';
+        document.getElementById('courseContent').innerHTML =
+          '<p style="color:var(--text-muted)">Course not found.</p>';
         return;
       }
 
       document.title = `${course.en.title} — JS Heroes Academy`;
       const user = getUser();
+
+      // ── Like батыры ──
+      const likeBtn = `
+        <button
+          data-like-id="${course.id}"
+          onclick="toggleLike(${course.id})"
+          style="background:none;border:1px solid var(--border-solid);
+                 border-radius:8px;padding:8px 16px;font-size:20px;
+                 cursor:pointer;color:var(--text);"
+          title="${currentLang==='kz'?'Таңдаулыларға қосу':'Add to favorites'}"
+        >${isLiked(course.id) ? '❤️' : '🤍'}</button>
+      `;
+
       const enrollBtn = user
-        ? `<button class="btn btn-primary" onclick="enrollCourse(${course.id})"><span class="lang-en">Enroll in Course</span><span class="lang-kz">Курсқа жазылу</span> ✦</button>`
-        : `<a href="/register" class="btn btn-primary"><span class="lang-en">Register to Enroll</span><span class="lang-kz">Тіркеліп жазылу</span> ✦</a>`;
- 
+        ? `<button class="btn btn-primary" onclick="enrollCourse(${course.id})">
+             <span class="lang-en">Enroll in Course</span><span class="lang-kz">Курсқа жазылу</span> ✦
+           </button>`
+        : `<a href="/register" class="btn btn-primary">
+             <span class="lang-en">Register to Enroll</span><span class="lang-kz">Тіркеліп жазылу</span> ✦
+           </a>`;
+
       const prev = courses.find(c => c.id === courseId - 1);
       const next = courses.find(c => c.id === courseId + 1);
 
@@ -83,20 +114,23 @@
           <span class="tag tag-${course.category}">✦ ${course.category.toUpperCase()}</span>
         </div>
         <h1 style="font-family:var(--font-display);font-size:38px;letter-spacing:2px;margin-bottom:6px;">
-          <span class="lang-en">${course.en.title}</span><span class="lang-kz">${course.kz.title}</span>
+          <span class="lang-en">${course.en.title}</span>
+          <span class="lang-kz">${course.kz.title}</span>
         </h1>
         <p style="color:var(--text-secondary);font-size:15px;margin-bottom:24px;">
-          <span class="lang-en">${course.en.desc}</span><span class="lang-kz">${course.kz.desc}</span>
+          <span class="lang-en">${course.en.desc}</span>
+          <span class="lang-kz">${course.kz.desc}</span>
         </p>
         <div class="video-wrapper">
           <iframe src="${course.video}" frameborder="0" allowfullscreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
         </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:32px;">
           ${enrollBtn}
           <a href="/quiz?course=${course.id}" class="btn btn-secondary">
             <span class="lang-en">Take Quiz</span><span class="lang-kz">Тестке кіру</span> →
           </a>
+          ${likeBtn}
         </div>
         <div class="alert alert-success" id="enrollAlert" style="display:none;margin-bottom:24px;"></div>
         <div style="display:flex;justify-content:space-between;margin-top:24px;">
@@ -104,6 +138,8 @@
           ${next ? `<a href="/course/${next.id}" class="btn btn-secondary btn-sm"><span class="lang-en">Next</span><span class="lang-kz">Келесі</span> →</a>` : '<div></div>'}
         </div>
       `;
+
+      updateLikeButtons();
       setLanguage(currentLang);
       loadComments();
     });
@@ -111,26 +147,46 @@
     async function enrollCourse(cid) {
       const user = getUser();
       if (!user) { window.location.href = '/register'; return; }
-      await fetch('/api/enroll', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, courseId: cid })
-      });
+      try {
+        await fetch('/api/enroll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, courseId: cid })
+        });
+      } catch {  }
       const a = document.getElementById('enrollAlert');
-      a.textContent = currentLang === 'kz' ? 'Курсқа сәтті жазылдыңыз!' : 'Successfully enrolled!';
-      a.style.display = 'block';
+      a.textContent    = currentLang==='kz' ? 'Курсқа сәтті жазылдыңыз!' : 'Successfully enrolled!';
+      a.style.display  = 'block';
+      saveProgress({ enrolledCourse: cid, percent: 20 });
     }
 
-    async function loadComments() {
-      const res = await fetch(`/api/reviews?courseId=${courseId}`);
-      const comments = await res.json();
+     async function loadComments() {
       const grid = document.getElementById('commentsGrid');
-      if (comments.length === 0) {
-        grid.innerHTML = '<p style="color:var(--text-muted);padding:16px;"><span class="lang-en">No comments yet.</span><span class="lang-kz">Пікірлер жоқ.</span></p>';
+
+       const lsComments = getCommentsFromLS(courseId);
+
+       let serverComments = [];
+      try {
+        const res     = await fetch(`/api/reviews?courseId=${courseId}`);
+        serverComments = await res.json();
+      } catch {  }
+
+       const serverIds = new Set(serverComments.map(c => String(c.id)));
+      const lsOnly    = lsComments.filter(c => !serverIds.has(String(c.id)));
+      const combined  = [...serverComments, ...lsOnly]
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+      if (combined.length === 0) {
+        grid.innerHTML = `
+          <p style="color:var(--text-muted);padding:16px;">
+            <span class="lang-en">No comments yet.</span>
+            <span class="lang-kz">Пікірлер жоқ.</span>
+          </p>`;
         setLanguage(currentLang);
         return;
       }
-      grid.innerHTML = comments.map(r => `
+
+      grid.innerHTML = combined.map(r => `
         <div class="review-card">
           <div class="review-header">
             <div class="review-avatar">${r.userName.charAt(0).toUpperCase()}</div>
@@ -147,24 +203,40 @@
 
     function selectCommentStar(n) {
       commentRating = n;
-      document.querySelectorAll('#commentStarSelect span').forEach((s, i) => s.classList.toggle('active', i < n));
+      document.querySelectorAll('#commentStarSelect span').forEach((s, i) =>
+        s.classList.toggle('active', i < n));
     }
 
-    async function submitComment() {
+     async function submitComment() {
       const name = document.getElementById('commentName').value.trim();
       const text = document.getElementById('commentText').value.trim();
-      if (!name || !text) return;
-      await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId, userName: name, text, rating: commentRating })
-      });
+      if (!name || !text) {
+        showToast(currentLang==='kz'?'Барлық өрістерді толтырыңыз':'Fill in all fields', 'warning');
+        return;
+      }
+
+      const commentData = { courseId, userName: name, text, rating: commentRating };
+
+       saveCommentToLS(commentData);
+
+       try {
+        await fetch('/api/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(commentData)
+        });
+      } catch {   }
+
       document.getElementById('commentName').value = '';
       document.getElementById('commentText').value = '';
+      selectCommentStar(5);
+
       const a = document.getElementById('commentSuccess');
-      a.textContent = currentLang === 'kz' ? 'Пікір сәтті жіберілді!' : 'Comment submitted!';
+      a.textContent   = currentLang==='kz' ? '✅ Пікір сәтті жіберілді!' : '✅ Comment submitted!';
       a.style.display = 'block';
       setTimeout(() => a.style.display = 'none', 3000);
+
+      showToast(currentLang==='kz'?'Пікір жіберілді! ⭐':'Comment saved! ⭐', 'success');
       loadComments();
     }
   </script>

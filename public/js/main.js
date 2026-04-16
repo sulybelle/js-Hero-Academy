@@ -1,4 +1,4 @@
-let currentLang = localStorage.getItem('jsha_lang') || 'en';
+ let currentLang = localStorage.getItem('jsha_lang') || 'en';
 
 function setLanguage(lang) {
   currentLang = lang;
@@ -20,6 +20,45 @@ function setTheme(theme) {
 }
 function toggleTheme() { setTheme(currentTheme === 'dark' ? 'light' : 'dark'); }
 
+ const LS_USERS = 'jsha_users';
+ 
+function getAllUsers() {
+  return JSON.parse(localStorage.getItem(LS_USERS) || '[]');
+}
+ 
+function saveUserToLS(userData) {
+  const users = getAllUsers();
+  const exists = users.find(u => u.email.toLowerCase() === userData.email.toLowerCase());
+  if (exists) {
+    return { success: false, error: currentLang === 'kz' ? 'Бұл email тіркелген' : 'Email already registered' };
+  }
+  const newUser = {
+    id:        Date.now(),
+    name:      userData.name,
+    phone:     userData.phone,
+    email:     userData.email,
+    password:  userData.password,   
+    createdAt: new Date().toISOString()
+  };
+  users.push(newUser);
+  localStorage.setItem(LS_USERS, JSON.stringify(users));
+  return { success: true, user: { id: newUser.id, name: newUser.name, email: newUser.email } };
+}
+ 
+function loginFromLS(email, password) {
+  const users = getAllUsers();
+  const found = users.find(
+    u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+  );
+  if (!found) {
+    return {
+      success: false,
+      error: currentLang === 'kz' ? 'Email немесе пароль қате' : 'Invalid email or password'
+    };
+  }
+  return { success: true, user: { id: found.id, name: found.name, email: found.email } };
+}
+ 
 function getUser() {
   return JSON.parse(localStorage.getItem('jsha_user') || 'null');
 }
@@ -46,194 +85,35 @@ function logout() {
 function toggleMenu() {
   document.querySelector('.nav-links')?.classList.toggle('open');
 }
+
+ const LS_COMMENTS = 'jsha_comments';
  
-function initPage() {
-  setTheme(currentTheme);
-  setLanguage(currentLang);
-  updateAuthUI();
-  initScrollToTop();
-  initSpinnerHide();
-  loadProgress();
+function getCommentsFromLS(courseId) {
+  const all = JSON.parse(localStorage.getItem(LS_COMMENTS) || '[]');
+  return courseId !== undefined
+    ? all.filter(c => c.courseId === courseId)
+    : all;
 }
  
-function showToast(message, type = 'info') {
-  let container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toast-container';
-    container.style.cssText = `
-      position:fixed; bottom:24px; right:24px; z-index:9999;
-      display:flex; flex-direction:column; gap:8px; pointer-events:none;
-    `;
-    document.body.appendChild(container);
-  }
-
-  const colors = {
-    success: '#10b981',
-    error:   '#ef4444',
-    info:    '#8b5cf6',
-    warning: '#f59e0b'
+function saveCommentToLS(commentData) {
+  const all = JSON.parse(localStorage.getItem(LS_COMMENTS) || '[]');
+  const newComment = {
+    id:        Date.now(),
+    courseId:  commentData.courseId ?? null,
+    userName:  commentData.userName,
+    text:      commentData.text,
+    rating:    commentData.rating || 5,
+    createdAt: new Date().toISOString()
   };
-
-  const toast = document.createElement('div');
-  toast.style.cssText = `
-    background:var(--bg-card);
-    border:1px solid ${colors[type] || colors.info};
-    color:var(--text);
-    padding:12px 20px;
-    border-radius:10px;
-    font-size:14px;
-    font-family:var(--font-body);
-    box-shadow:0 4px 20px rgba(0,0,0,0.3);
-    opacity:0;
-    transform:translateX(40px);
-    transition:all 0.3s;
-    pointer-events:auto;
-    min-width:220px;
-    display:flex; align-items:center; gap:10px;
-  `;
-  const icons = { success: '✅', error: '❌', info: '⚡', warning: '⚠️' };
-  toast.innerHTML = `<span>${icons[type] || '⚡'}</span><span>${message}</span>`;
-  container.appendChild(toast);
-
-  requestAnimationFrame(() => {
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateX(0)';
-  });
-
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(40px)';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  all.push(newComment);
+  localStorage.setItem(LS_COMMENTS, JSON.stringify(all));
+  return newComment;
 }
  
-function initScrollToTop() {
-  const existing = document.getElementById('scrollTopBtn');
-  if (!existing) {
-    const btn = document.createElement('button');
-    btn.id = 'scrollTopBtn';
-    btn.innerHTML = '▲';
-    btn.title = 'Жоғарыға';
-    btn.style.cssText = `
-      position:fixed; bottom:80px; right:24px;
-      width:42px; height:42px;
-      background:var(--accent); color:#fff;
-      border:none; border-radius:50%;
-      font-size:16px; cursor:pointer;
-      display:none; align-items:center; justify-content:center;
-      z-index:999; box-shadow:0 4px 16px var(--accent-glow);
-      transition:all 0.3s;
-    `;
-    btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.body.appendChild(btn);
-  }
-
-  window.addEventListener('scroll', () => {
-    const btn = document.getElementById('scrollTopBtn');
-    if (!btn) return;
-    if (window.scrollY > 300) {
-      btn.style.display = 'flex';
-    } else {
-      btn.style.display = 'none';
-    }
-  });
-}
- 
-function showSpinner() {
-  let overlay = document.getElementById('spinnerOverlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'spinnerOverlay';
-    overlay.style.cssText = `
-      position:fixed; inset:0; background:rgba(0,0,0,0.5);
-      z-index:8888; display:flex; align-items:center; justify-content:center;
-    `;
-    overlay.innerHTML = `
-      <div style="
-        width:48px; height:48px;
-        border:4px solid var(--border-solid);
-        border-top-color:var(--accent);
-        border-radius:50%;
-        animation:spin 0.8s linear infinite;
-      "></div>
-      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-    `;
-    document.body.appendChild(overlay);
-  }
-  overlay.style.display = 'flex';
-}
-
-function hideSpinner() {
-  const overlay = document.getElementById('spinnerOverlay');
-  if (overlay) overlay.style.display = 'none';
-}
-
-function initSpinnerHide() {
-  // Барлық fetch сұраныстарда spinner автоматты шығу
-  window.addEventListener('load', hideSpinner);
-}
- 
-function openModal(title, bodyHTML) {
-  let overlay = document.getElementById('globalModal');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'globalModal';
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-      <div class="modal">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h3 id="modalTitle" style="font-family:var(--font-display);font-size:24px;letter-spacing:2px;"></h3>
-          <button onclick="closeModal()" style="
-            background:none;border:none;color:var(--text-secondary);
-            font-size:22px;cursor:pointer;line-height:1;
-          ">✕</button>
-        </div>
-        <div id="modalBody"></div>
-      </div>
-    `;
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeModal();
-    });
-    document.body.appendChild(overlay);
-  }
-  document.getElementById('modalTitle').innerHTML = title;
-  document.getElementById('modalBody').innerHTML = bodyHTML;
-  overlay.classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-  const overlay = document.getElementById('globalModal');
-  if (overlay) overlay.classList.remove('active');
-  document.body.style.overflow = '';
-}
-
-// ESC — модалды жабу
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeModal();
-});
- 
-const PROGRESS_KEY = 'jsha_progress';
-
-function saveProgress(data) {
-  const current = getProgress();
-  const updated = { ...current, ...data, updatedAt: Date.now() };
-  localStorage.setItem(PROGRESS_KEY, JSON.stringify(updated));
-}
-
-function getProgress() {
-  return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
-}
-
-function loadProgress() {
-  const p = getProgress();
-  // Progress bar UI бар болса, жаңарту
-  const bar = document.getElementById('progressBarFill');
-  if (bar && p.percent !== undefined) {
-    bar.style.width = p.percent + '%';
-  }
-  return p;
+function deleteCommentFromLS(commentId) {
+  const all = JSON.parse(localStorage.getItem(LS_COMMENTS) || '[]');
+  const filtered = all.filter(c => c.id !== commentId);
+  localStorage.setItem(LS_COMMENTS, JSON.stringify(filtered));
 }
  
 const LIKES_KEY = 'jsha_likes';
@@ -268,6 +148,175 @@ function updateLikeButtons() {
     btn.innerHTML = isLiked(id) ? '❤️' : '🤍';
   });
 }
+
+ const PROGRESS_KEY = 'jsha_progress';
+
+function saveProgress(data) {
+  const current = getProgress();
+  const updated = { ...current, ...data, updatedAt: Date.now() };
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify(updated));
+}
+
+function getProgress() {
+  return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
+}
+
+function loadProgress() {
+  const p = getProgress();
+  const bar = document.getElementById('progressBarFill');
+  if (bar && p.percent !== undefined) {
+    bar.style.width = p.percent + '%';
+  }
+  return p;
+}
+
+ function initPage() {
+  setTheme(currentTheme);
+  setLanguage(currentLang);
+  updateAuthUI();
+  initScrollToTop();
+  initSpinnerHide();
+  loadProgress();
+}
+
+ function showToast(message, type = 'info') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.cssText = `
+      position:fixed; bottom:24px; right:24px; z-index:9999;
+      display:flex; flex-direction:column; gap:8px; pointer-events:none;
+    `;
+    document.body.appendChild(container);
+  }
+
+  const colors = { success: '#10b981', error: '#ef4444', info: '#8b5cf6', warning: '#f59e0b' };
+  const icons  = { success: '✅', error: '❌', info: '⚡', warning: '⚠️' };
+
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    background:var(--bg-card);
+    border:1px solid ${colors[type] || colors.info};
+    color:var(--text);
+    padding:12px 20px;
+    border-radius:10px;
+    font-size:14px;
+    font-family:var(--font-body);
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+    opacity:0;
+    transform:translateX(40px);
+    transition:all 0.3s;
+    pointer-events:auto;
+    min-width:220px;
+    display:flex; align-items:center; gap:10px;
+  `;
+  toast.innerHTML = `<span>${icons[type] || '⚡'}</span><span>${message}</span>`;
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(0)';
+  });
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(40px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+ 
+function initScrollToTop() {
+  if (!document.getElementById('scrollTopBtn')) {
+    const btn = document.createElement('button');
+    btn.id = 'scrollTopBtn';
+    btn.innerHTML = '▲';
+    btn.title = 'Жоғарыға';
+    btn.style.cssText = `
+      position:fixed; bottom:80px; right:24px;
+      width:42px; height:42px;
+      background:var(--accent); color:#fff;
+      border:none; border-radius:50%;
+      font-size:16px; cursor:pointer;
+      display:none; align-items:center; justify-content:center;
+      z-index:999; box-shadow:0 4px 16px var(--accent-glow);
+      transition:all 0.3s;
+    `;
+    btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.body.appendChild(btn);
+  }
+  window.addEventListener('scroll', () => {
+    const btn = document.getElementById('scrollTopBtn');
+    if (btn) btn.style.display = window.scrollY > 300 ? 'flex' : 'none';
+  });
+}
+ 
+function showSpinner() {
+  let overlay = document.getElementById('spinnerOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'spinnerOverlay';
+    overlay.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      z-index:8888; display:flex; align-items:center; justify-content:center;
+    `;
+    overlay.innerHTML = `
+      <div style="
+        width:48px; height:48px;
+        border:4px solid var(--border-solid);
+        border-top-color:var(--accent);
+        border-radius:50%;
+        animation:spin 0.8s linear infinite;
+      "></div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    `;
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+}
+
+function hideSpinner() {
+  const overlay = document.getElementById('spinnerOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function initSpinnerHide() {
+  window.addEventListener('load', hideSpinner);
+}
+
+// ───────────── MODAL ─────────────
+function openModal(title, bodyHTML) {
+  let overlay = document.getElementById('globalModal');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'globalModal';
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 id="modalTitle" style="font-family:var(--font-display);font-size:24px;letter-spacing:2px;"></h3>
+          <button onclick="closeModal()" style="
+            background:none;border:none;color:var(--text-secondary);
+            font-size:22px;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div id="modalBody"></div>
+      </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.body.appendChild(overlay);
+  }
+  document.getElementById('modalTitle').innerHTML = title;
+  document.getElementById('modalBody').innerHTML  = bodyHTML;
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  const overlay = document.getElementById('globalModal');
+  if (overlay) overlay.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
  
 function getHeader(activePage) {
   return `
@@ -282,9 +331,9 @@ function getHeader(activePage) {
       </div>
       <nav>
         <div class="nav-links">
-          <a href="/" class="${activePage==='home'?'active':''}">HOME</a>
+          <a href="/"        class="${activePage==='home'?'active':''}">HOME</a>
           <a href="/courses" class="${activePage==='courses'?'active':''}">COURSES</a>
-          <a href="/quiz" class="${activePage==='quiz'?'active':''}">QUIZ</a>
+          <a href="/quiz"    class="${activePage==='quiz'?'active':''}">QUIZ</a>
           <a href="/contact" class="${activePage==='contact'?'active':''}">CONTACT</a>
           <a href="/login" class="btn-login auth-link">LOGIN</a>
           <a href="#" class="logout-link" onclick="logout()" style="display:none;color:var(--text-muted);font-size:12px;">
@@ -312,7 +361,7 @@ function getFooter() {
           </div>
           <p>
             <span class="lang-en">Marvel-style interactive JavaScript learning platform in Kazakh and English.</span>
-            <span class="lang-kz">Marvel стиліндегі интерактивті JavaScript оқыту платформасы.</span>
+            <span class="lang-kz">Marvel стіліндегі интерактивті JavaScript оқыту платформасы.</span>
           </p>
         </div>
         <div class="footer-col">
@@ -343,9 +392,11 @@ function getFooter() {
       <div class="footer-bottom">© 2026 JS Heroes Academy.</div>
     </div>
   </footer>`;
-} 
+}
+
+// ───────────── COURSE CARDS ─────────────
 function createCourseCardHorizontal(c) {
-  const lang = currentLang;
+  const lang  = currentLang;
   const title = lang === 'kz' ? c.kz.title : c.en.title;
   const desc  = lang === 'kz' ? c.kz.desc  : c.en.desc;
   const liked = isLiked(c.id);
@@ -380,7 +431,7 @@ function createCourseCardHorizontal(c) {
 }
 
 function createCourseCardVertical(c) {
-  const lang = currentLang;
+  const lang  = currentLang;
   const title = lang === 'kz' ? c.kz.title : c.en.title;
   const desc  = lang === 'kz' ? c.kz.desc  : c.en.desc;
   const liked = isLiked(c.id);

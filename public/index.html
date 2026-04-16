@@ -6,7 +6,6 @@
   <title>JS Heroes Academy</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    
     .tab-nav { display:flex; gap:4px; border-bottom:2px solid var(--border-solid); margin-bottom:24px; }
     .tab-nav-btn {
       padding:10px 24px; background:none; border:none;
@@ -18,8 +17,7 @@
     .tab-nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
     .tab-pane { display:none; }
     .tab-pane.active { display:block; }
-
-     .accordion-item {
+    .accordion-item {
       border:1px solid var(--border-solid); border-radius:10px;
       margin-bottom:8px; overflow:hidden; transition:border-color 0.2s;
     }
@@ -43,7 +41,8 @@
 <body>
 <div id="header-root"></div>
 
-<main> 
+<main>
+  <!-- HERO -->
   <div class="hero">
     <div class="hero-inner">
       <div class="hero-text">
@@ -71,7 +70,8 @@
       </div>
     </div>
   </div>
- 
+
+  <!-- TABS -->
   <section>
     <div class="tab-nav" role="tablist">
       <button class="tab-nav-btn active" onclick="switchTab('courses', this)">
@@ -84,7 +84,8 @@
         ❓ <span class="lang-en">FAQ</span><span class="lang-kz">Сұрақтар</span>
       </button>
     </div>
- 
+
+    <!-- COURSES TAB -->
     <div class="tab-pane active" id="tab-courses">
       <div class="section-header">
         <h2><span class="lang-en">POPULAR <span>COURSES</span></span><span class="lang-kz">ТАНЫМАЛ <span>КУРСТАР</span></span></h2>
@@ -98,7 +99,8 @@
         <div class="stat-card"><div class="stat-num">∞</div><div class="stat-label"><span class="lang-en">Access</span><span class="lang-kz">Қол жетімділік</span></div></div>
       </div>
     </div>
- 
+
+    <!-- REVIEWS TAB -->
     <div class="tab-pane" id="tab-reviews">
       <div class="section-header">
         <h2><span class="lang-en">HERO <span>REVIEWS</span></span><span class="lang-kz">БАТЫРЛАР <span>ПІКІРЛЕРІ</span></span></h2>
@@ -126,7 +128,8 @@
         </button>
       </div>
     </div>
- 
+
+    <!-- FAQ TAB -->
     <div class="tab-pane" id="tab-faq">
       <div class="section-header">
         <h2><span class="lang-en">FREQUENTLY ASKED <span>QUESTIONS</span></span><span class="lang-kz">ЖИІ ҚОЙЫЛАТЫН <span>СҰРАҚТАР</span></span></h2>
@@ -143,34 +146,29 @@
 
   const faqData = [
     {
-      q_en: 'Do I need prior programming experience?',
-      q_kz: 'Алдын ала бағдарламалау тәжірибесі керек пе?',
-      a_en: 'No prior experience needed! Our courses start from the very basics of JavaScript and gradually progress to advanced topics.',
-      a_kz: 'Алдын ала тәжірибе қажет емес! Курстарымыз JavaScript негіздерінен басталып, біртіндеп күрделене береді.'
+      q_en:'Do I need prior programming experience?', q_kz:'Алдын ала бағдарламалау тәжірибесі керек пе?',
+      a_en:'No prior experience needed! Our courses start from the very basics of JavaScript and gradually progress to advanced topics.',
+      a_kz:'Алдын ала тәжірибе қажет емес! Курстарымыз JavaScript негіздерінен басталып, біртіндеп күрделене береді.'
     },
     {
-      q_en: 'Are the courses available in Kazakh?',
-      q_kz: 'Курстар қазақ тілінде бар ма?',
-      a_en: 'Yes! All courses are available in both Kazakh and English. Switch language anytime using the button in the header.',
-      a_kz: 'Иә! Барлық курстар қазақ және ағылшын тілдерінде қолжетімді.'
+      q_en:'Are the courses available in Kazakh?', q_kz:'Курстар қазақ тілінде бар ма?',
+      a_en:'Yes! All courses are available in both Kazakh and English. Switch language anytime using the button in the header.',
+      a_kz:'Иә! Барлық курстар қазақ және ағылшын тілдерінде қолжетімді.'
     },
     {
-      q_en: 'How do quizzes work?',
-      q_kz: 'Тесттер қалай жұмыс істейді?',
-      a_en: 'Each video lesson has a corresponding quiz with 4 questions. Your scores are saved automatically.',
-      a_kz: 'Әр видеосабаққа сәйкес 4 сұрақтан тұратын тест бар. Нәтижелер автоматты сақталады.'
+      q_en:'How do quizzes work?', q_kz:'Тесттер қалай жұмыс істейді?',
+      a_en:'Each video lesson has a corresponding quiz with 4 questions. Your scores are saved automatically.',
+      a_kz:'Әр видеосабаққа сәйкес 4 сұрақтан тұратын тест бар. Нәтижелер автоматты сақталады.'
     },
     {
-      q_en: 'Can I save my favorite courses?',
-      q_kz: 'Таңдаулы курстарды сақтауға бола ма?',
-      a_en: 'Yes! Click the heart icon on any course to add it to your favorites. Favorites are saved in your browser.',
-      a_kz: 'Иә! Кез келген курстың жүрек белгісін басып, таңдаулыларға қосыңыз.'
+      q_en:'Can I save my favorite courses?', q_kz:'Таңдаулы курстарды сақтауға бола ма?',
+      a_en:'Yes! Click the heart icon on any course to add it to your favorites. Favorites are saved in your browser.',
+      a_kz:'Иә! Кез келген курстың жүрек белгісін басып, таңдаулыларға қосыңыз.'
     },
     {
-      q_en: 'Is registration required to view courses?',
-      q_kz: 'Курстарды көру үшін тіркелу керек пе?',
-      a_en: 'You can browse all courses without registration. However, to enroll and track progress, an account is required.',
-      a_kz: 'Тіркелмей-ақ барлық курстарды шолуға болады. Бірақ жазылу үшін аккаунт қажет.'
+      q_en:'Is registration required to view courses?', q_kz:'Курстарды көру үшін тіркелу керек пе?',
+      a_en:'You can browse all courses without registration. However, to enroll and track progress, an account is required.',
+      a_kz:'Тіркелмей-ақ барлық курстарды шолуға болады. Бірақ жазылу үшін аккаунт қажет.'
     }
   ];
 
@@ -180,12 +178,12 @@
     initPage();
     selectStar(5);
     buildAccordion();
- 
+
     showSpinner();
     try {
       const res = await fetch('/api/courses');
       const courses = await res.json();
-       document.getElementById('coursesGrid').innerHTML =
+      document.getElementById('coursesGrid').innerHTML =
         courses.slice(0, 6).map(c => createCourseCardVertical(c)).join('');
       updateLikeButtons();
       setLanguage(currentLang);
@@ -196,18 +194,22 @@
     hideSpinner();
     loadReviews();
   });
- 
+
   function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + tabId).classList.add('active');
     btn.classList.add('active');
- 
-    const names = { courses: { en:'Courses', kz:'Курстар' }, reviews: { en:'Reviews', kz:'Пікірлер' }, faq: { en:'FAQ', kz:'Сұрақтар' } };
-    showToast((currentLang === 'kz' ? names[tabId].kz : names[tabId].en) + (currentLang==='kz'?' бетіне өтті':' tab opened'), 'info');
+    const names = {
+      courses: { en:'Courses', kz:'Курстар' },
+      reviews: { en:'Reviews', kz:'Пікірлер' },
+      faq:     { en:'FAQ',     kz:'Сұрақтар' }
+    };
+    showToast((currentLang==='kz'?names[tabId].kz:names[tabId].en) +
+      (currentLang==='kz'?' бетіне өтті':' tab opened'), 'info');
   }
 
-   function buildAccordion() {
+  function buildAccordion() {
     const container = document.getElementById('accordionContainer');
     container.innerHTML = faqData.map((item, i) => `
       <div class="accordion-item" id="acc-${i}">
@@ -231,41 +233,51 @@
     const item = document.getElementById('acc-' + i);
     const body = document.getElementById('acc-body-' + i);
     const wasOpen = item.classList.contains('open');
- 
     document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('open'));
     document.querySelectorAll('.accordion-body').forEach(el => el.classList.remove('open'));
-    if (!wasOpen) {
-      item.classList.add('open');
-      body.classList.add('open');
-    }
+    if (!wasOpen) { item.classList.add('open'); body.classList.add('open'); }
   }
 
-  async function loadReviews() {
+   async function loadReviews() {
+    const grid = document.getElementById('reviewsGrid');
+
+     const lsReviews = getCommentsFromLS(null).filter(c => c.courseId === null);
+
+     let serverReviews = [];
     try {
-      const res = await fetch('/api/reviews');
-      const reviews = await res.json();
-      const grid = document.getElementById('reviewsGrid');
-      if (!reviews.length) {
-        grid.innerHTML = `<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:20px;">
+      const res   = await fetch('/api/reviews');
+      serverReviews = await res.json();
+    } catch {  }
+
+     const serverIds = new Set(serverReviews.map(r => String(r.id)));
+    const lsOnly    = lsReviews.filter(r => !serverIds.has(String(r.id)));
+    const combined  = [...serverReviews, ...lsOnly]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 6);
+
+    if (!combined.length) {
+      grid.innerHTML = `
+        <p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:20px;">
           <span class="lang-en">No reviews yet. Be the first hero!</span>
-          <span class="lang-kz">Пікірлер жоқ. Бірінші батыр болыңыз!</span></p>`;
-        setLanguage(currentLang);
-        return;
-      }
-      grid.innerHTML = reviews.slice(-6).reverse().map(r => `
-        <div class="review-card">
-          <div class="review-header">
-            <div class="review-avatar">${r.userName.charAt(0).toUpperCase()}</div>
-            <div>
-              <div class="review-name">${r.userName}</div>
-              <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
-            </div>
+          <span class="lang-kz">Пікірлер жоқ. Бірінші батыр болыңыз!</span>
+        </p>`;
+      setLanguage(currentLang);
+      return;
+    }
+
+    grid.innerHTML = combined.map(r => `
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar">${r.userName.charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="review-name">${r.userName}</div>
+            <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
           </div>
-          <div class="review-text">${r.text}</div>
-          <div class="review-date">${new Date(r.createdAt).toLocaleDateString()}</div>
         </div>
-      `).join('');
-    } catch { document.getElementById('reviewsGrid').innerHTML = ''; }
+        <div class="review-text">${r.text}</div>
+        <div class="review-date">${new Date(r.createdAt).toLocaleDateString()}</div>
+      </div>
+    `).join('');
   }
 
   function selectStar(n) {
@@ -273,30 +285,36 @@
     document.querySelectorAll('#starSelect span').forEach((s, i) => s.classList.toggle('active', i < n));
   }
 
-  async function submitReview() {
+   async function submitReview() {
     const name = document.getElementById('reviewName').value.trim();
     const text = document.getElementById('reviewText').value.trim();
     if (!name || !text) {
       showToast(currentLang==='kz'?'Барлық өрістерді толтырыңыз':'Fill in all fields', 'warning');
       return;
     }
+
+    const reviewData = { courseId: null, userName: name, text, rating: selectedRating };
+
+     saveCommentToLS(reviewData);
+ 
     try {
       await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userName: name, text, rating: selectedRating })
       });
-      document.getElementById('reviewName').value = '';
-      document.getElementById('reviewText').value = '';
-      const alertEl = document.getElementById('reviewSuccess');
-      alertEl.textContent = currentLang==='kz'?'✅ Пікіріңіз сәтті жіберілді!':'✅ Review submitted!';
-      alertEl.style.display = 'block';
-      setTimeout(() => alertEl.style.display = 'none', 3000);
-      showToast(currentLang==='kz'?'Пікір жіберілді! ⭐':'Review submitted! ⭐', 'success');
-      loadReviews();
-    } catch {
-      showToast('Error submitting review', 'error');
-    }
+    } catch {   }
+
+    document.getElementById('reviewName').value = '';
+    document.getElementById('reviewText').value = '';
+
+    const alertEl = document.getElementById('reviewSuccess');
+    alertEl.textContent  = currentLang==='kz' ? '✅ Пікіріңіз сәтті жіберілді!' : '✅ Review submitted!';
+    alertEl.style.display = 'block';
+    setTimeout(() => alertEl.style.display = 'none', 3000);
+
+    showToast(currentLang==='kz'?'Пікір жіберілді! ⭐':'Review submitted! ⭐', 'success');
+    loadReviews();
   }
 </script>
 </body>
