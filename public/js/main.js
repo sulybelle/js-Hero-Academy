@@ -46,10 +46,7 @@ function logout() {
 function toggleMenu() {
   document.querySelector('.nav-links')?.classList.toggle('open');
 }
-
-// ============================================================
-// INIT PAGE
-// ============================================================
+ 
 function initPage() {
   setTheme(currentTheme);
   setLanguage(currentLang);
@@ -58,10 +55,7 @@ function initPage() {
   initSpinnerHide();
   loadProgress();
 }
-
-// ============================================================
-// 7. TOAST NOTIFICATION — автоматты жоғалады
-// ============================================================
+ 
 function showToast(message, type = 'info') {
   let container = document.getElementById('toast-container');
   if (!container) {
@@ -113,10 +107,7 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
-
-// ============================================================
-// 14. SCROLL TO TOP
-// ============================================================
+ 
 function initScrollToTop() {
   const existing = document.getElementById('scrollTopBtn');
   if (!existing) {
@@ -148,10 +139,7 @@ function initScrollToTop() {
     }
   });
 }
-
-// ============================================================
-// 12. LOADING SPINNER
-// ============================================================
+ 
 function showSpinner() {
   let overlay = document.getElementById('spinnerOverlay');
   if (!overlay) {
@@ -185,10 +173,7 @@ function initSpinnerHide() {
   // Барлық fetch сұраныстарда spinner автоматты шығу
   window.addEventListener('load', hideSpinner);
 }
-
-// ============================================================
-// 5. MODAL ТЕРЕЗЕ
-// ============================================================
+ 
 function openModal(title, bodyHTML) {
   let overlay = document.getElementById('globalModal');
   if (!overlay) {
@@ -228,10 +213,7 @@ function closeModal() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeModal();
 });
-
-// ============================================================
-// 15. PROGRESS / STATE САҚТАУ
-// ============================================================
+ 
 const PROGRESS_KEY = 'jsha_progress';
 
 function saveProgress(data) {
@@ -253,10 +235,7 @@ function loadProgress() {
   }
   return p;
 }
-
-// ============================================================
-// 8. LIKE / FAVORITE ЖҮЙЕСІ
-// ============================================================
+ 
 const LIKES_KEY = 'jsha_likes';
 
 function getLikes() {
@@ -289,10 +268,7 @@ function updateLikeButtons() {
     btn.innerHTML = isLiked(id) ? '❤️' : '🤍';
   });
 }
-
-// ============================================================
-// HEADER & FOOTER
-// ============================================================
+ 
 function getHeader(activePage) {
   return `
   <header>
@@ -367,11 +343,7 @@ function getFooter() {
       <div class="footer-bottom">© 2026 JS Heroes Academy.</div>
     </div>
   </footer>`;
-}
-
-// ============================================================
-// COURSE CARD HELPERS
-// ============================================================
+} 
 function createCourseCardHorizontal(c) {
   const lang = currentLang;
   const title = lang === 'kz' ? c.kz.title : c.en.title;

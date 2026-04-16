@@ -6,7 +6,7 @@
   <title>JS Heroes Academy</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* 11. TABS */
+    
     .tab-nav { display:flex; gap:4px; border-bottom:2px solid var(--border-solid); margin-bottom:24px; }
     .tab-nav-btn {
       padding:10px 24px; background:none; border:none;
@@ -19,8 +19,7 @@
     .tab-pane { display:none; }
     .tab-pane.active { display:block; }
 
-    /* 11. ACCORDION */
-    .accordion-item {
+     .accordion-item {
       border:1px solid var(--border-solid); border-radius:10px;
       margin-bottom:8px; overflow:hidden; transition:border-color 0.2s;
     }
@@ -44,8 +43,7 @@
 <body>
 <div id="header-root"></div>
 
-<main>
-  <!-- HERO -->
+<main> 
   <div class="hero">
     <div class="hero-inner">
       <div class="hero-text">
@@ -73,8 +71,7 @@
       </div>
     </div>
   </div>
-
-  <!-- 11. TABS -->
+ 
   <section>
     <div class="tab-nav" role="tablist">
       <button class="tab-nav-btn active" onclick="switchTab('courses', this)">
@@ -87,8 +84,7 @@
         ❓ <span class="lang-en">FAQ</span><span class="lang-kz">Сұрақтар</span>
       </button>
     </div>
-
-    <!-- TAB: Courses — 3. ДИНАМИКАЛЫҚ КОНТЕНТ -->
+ 
     <div class="tab-pane active" id="tab-courses">
       <div class="section-header">
         <h2><span class="lang-en">POPULAR <span>COURSES</span></span><span class="lang-kz">ТАНЫМАЛ <span>КУРСТАР</span></span></h2>
@@ -102,8 +98,7 @@
         <div class="stat-card"><div class="stat-num">∞</div><div class="stat-label"><span class="lang-en">Access</span><span class="lang-kz">Қол жетімділік</span></div></div>
       </div>
     </div>
-
-    <!-- TAB: Reviews -->
+ 
     <div class="tab-pane" id="tab-reviews">
       <div class="section-header">
         <h2><span class="lang-en">HERO <span>REVIEWS</span></span><span class="lang-kz">БАТЫРЛАР <span>ПІКІРЛЕРІ</span></span></h2>
@@ -131,8 +126,7 @@
         </button>
       </div>
     </div>
-
-    <!-- TAB: FAQ — 11. ACCORDION -->
+ 
     <div class="tab-pane" id="tab-faq">
       <div class="section-header">
         <h2><span class="lang-en">FREQUENTLY ASKED <span>QUESTIONS</span></span><span class="lang-kz">ЖИІ ҚОЙЫЛАТЫН <span>СҰРАҚТАР</span></span></h2>
@@ -186,14 +180,12 @@
     initPage();
     selectStar(5);
     buildAccordion();
-
-    // 12. SPINNER — жүктеу кезінде
+ 
     showSpinner();
     try {
       const res = await fetch('/api/courses');
       const courses = await res.json();
-      // 3. Массивтен деректер шығарылып, HTML-ге render жасалады
-      document.getElementById('coursesGrid').innerHTML =
+       document.getElementById('coursesGrid').innerHTML =
         courses.slice(0, 6).map(c => createCourseCardVertical(c)).join('');
       updateLikeButtons();
       setLanguage(currentLang);
@@ -204,20 +196,18 @@
     hideSpinner();
     loadReviews();
   });
-
-  // 11. TABS — контент ауысады, UI дұрыс жұмыс істейді
+ 
   function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + tabId).classList.add('active');
     btn.classList.add('active');
-    // 7. TOAST — таб ауысқанда хабарлама
+ 
     const names = { courses: { en:'Courses', kz:'Курстар' }, reviews: { en:'Reviews', kz:'Пікірлер' }, faq: { en:'FAQ', kz:'Сұрақтар' } };
     showToast((currentLang === 'kz' ? names[tabId].kz : names[tabId].en) + (currentLang==='kz'?' бетіне өтті':' tab opened'), 'info');
   }
 
-  // 11. ACCORDION
-  function buildAccordion() {
+   function buildAccordion() {
     const container = document.getElementById('accordionContainer');
     container.innerHTML = faqData.map((item, i) => `
       <div class="accordion-item" id="acc-${i}">
@@ -241,7 +231,7 @@
     const item = document.getElementById('acc-' + i);
     const body = document.getElementById('acc-body-' + i);
     const wasOpen = item.classList.contains('open');
-    // Барлығын жабу
+ 
     document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('open'));
     document.querySelectorAll('.accordion-body').forEach(el => el.classList.remove('open'));
     if (!wasOpen) {

@@ -6,8 +6,7 @@
   <title>Register — JS Heroes Academy</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* ── Multi-step ── */
-    .steps-indicator {
+     .steps-indicator {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -34,8 +33,7 @@
 
     .form-step { display: none; }
     .form-step.active { display: block; }
-
-    /* ── Validation ── */
+ 
     .form-group input.input-error   { border-color: var(--danger) !important; }
     .form-group input.input-success { border-color: var(--success) !important; }
     .field-error {
@@ -51,8 +49,7 @@
       color: var(--success);
       margin-top: 4px;
     }
-
-    /* ── Password toggle ── */
+ 
     .pass-wrap {
       position: relative;
     }
@@ -70,16 +67,14 @@
       line-height: 1;
     }
     .pass-toggle:hover { color: var(--accent); }
-
-    /* ── Step nav ── */
+ 
     .step-nav {
       display: flex;
       gap: 10px;
       margin-top: 20px;
     }
     .step-nav button { flex: 1; }
-
-    /* ── Summary ── */
+ 
     .summary-item {
       display: flex; justify-content: space-between;
       padding: 8px 0;
@@ -100,8 +95,7 @@
       <span class="lang-en">Join the academy and start learning</span>
       <span class="lang-kz">Академияға тіркеліп, оқуды бастаңыз</span>
     </p>
-
-    <!-- Steps indicator -->
+ 
     <div class="steps-indicator">
       <div class="step-dot active" id="dot1">1</div>
       <div class="step-line"></div>
@@ -112,8 +106,7 @@
 
     <div class="alert alert-error"   id="alertError"></div>
     <div class="alert alert-success" id="alertSuccess"></div>
-
-    <!-- ── STEP 1: Жеке мәліметтер ── -->
+ 
     <div class="form-step active" id="step1">
       <h4 style="font-size:13px;color:var(--accent);letter-spacing:1px;margin-bottom:16px;">
         <span class="lang-en">STEP 1 — Personal Info</span>
@@ -138,8 +131,7 @@
         </button>
       </div>
     </div>
-
-    <!-- ── STEP 2: Аккаунт ── -->
+ 
     <div class="form-step" id="step2">
       <h4 style="font-size:13px;color:var(--accent);letter-spacing:1px;margin-bottom:16px;">
         <span class="lang-en">STEP 2 — Account</span>
@@ -179,8 +171,7 @@
         </button>
       </div>
     </div>
-
-    <!-- ── STEP 3: Растау ── -->
+ 
     <div class="form-step" id="step3">
       <h4 style="font-size:13px;color:var(--accent);letter-spacing:1px;margin-bottom:16px;">
         <span class="lang-en">STEP 3 — Confirm</span>
@@ -225,8 +216,7 @@
     document.getElementById('regConfirm').addEventListener('input',  () => validateConfirm(false));
   });
 
-  // ── 13. PASSWORD SHOW/HIDE ──
-  function togglePass(inputId, btn) {
+   function togglePass(inputId, btn) {
     const input = document.getElementById(inputId);
     if (input.type === 'password') {
       input.type = 'text';
@@ -237,8 +227,7 @@
     }
   }
 
-  // ── STEP NAV ──
-  function goStep(n) {
+   function goStep(n) {
     if (n > currentStep) {
       if (!validateStep(currentStep)) return;
     }
@@ -270,8 +259,7 @@
     `;
   }
 
-  // ── 1. FORM VALIDATION ──
-  function setFieldState(inputId, errId, isValid, msg) {
+   function setFieldState(inputId, errId, isValid, msg) {
     const input = document.getElementById(inputId);
     const err   = document.getElementById(errId);
     input.classList.toggle('input-error',   !isValid);
@@ -329,7 +317,7 @@
     return true;
   }
 
-  // ── SUBMIT ──
+ 
   async function submitRegister() {
     hide('alertError'); hide('alertSuccess');
     const btn = document.getElementById('submitBtn');
@@ -362,8 +350,7 @@
         return;
       }
 
-      // 2. LOCAL STORAGE — деректерді сақтау
-      localStorage.setItem('jsha_user', JSON.stringify(data.user));
+       localStorage.setItem('jsha_user', JSON.stringify(data.user));
       saveProgress({ registered: true, percent: 10 });
 
       show('alertSuccess', currentLang === 'kz' ? '✅ Сәтті тіркелдіңіз!' : '✅ Registered successfully!');

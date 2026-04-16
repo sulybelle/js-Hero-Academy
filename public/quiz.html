@@ -29,12 +29,10 @@
     </div>
   </div>
 
-  <!-- Quiz grid -->
   <div class="quiz-select" id="quizSelect">
     <div class="quiz-card-grid" id="quizGrid"></div>
   </div>
 
-  <!-- Quiz area -->
   <div class="quiz-area" id="quizArea">
     <div style="margin-bottom:16px;">
       <button class="btn btn-secondary btn-sm" onclick="backToSelect()">
@@ -47,7 +45,6 @@
         <span class="lang-en">Question</span><span class="lang-kz">Сұрақ</span>
         <strong id="qNum">1</strong> / <strong id="qTotal">4</strong>
       </span>
-      <!-- 9. Нәтиже UI-де дұрыс көрсетіледі -->
       <span id="qScore" style="color:var(--accent);font-weight:600;">0 pts</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
@@ -59,7 +56,6 @@
     </div>
   </div>
 
-  <!-- Flashcard area -->
   <div class="flashcard-area" id="flashcardArea">
     <div style="margin-bottom:16px;">
       <button class="btn btn-secondary btn-sm" onclick="backToSelect()">
@@ -91,7 +87,6 @@
     </div>
   </div>
 
-  <!-- 9. ЕСЕПТЕУ ЛОГИКАСЫ — result -->
   <div class="quiz-result" id="quizResult" style="max-width:500px;margin:0 auto;padding:24px;">
     <h2>
       <span class="lang-en">MISSION <span style="color:var(--accent)">COMPLETE</span></span>
@@ -100,7 +95,6 @@
     <div class="score-big" id="resultScore">0%</div>
     <p style="color:var(--text-secondary);margin-bottom:16px;" id="resultText"></p>
 
-    <!-- 9. UI-де дұрыс көрсету — детальді нәтиже -->
     <div id="resultDetail" style="
       background:var(--bg-card);border:1px solid var(--border-solid);
       border-radius:10px;padding:16px;margin-bottom:20px;text-align:left;
@@ -135,7 +129,6 @@
     document.getElementById('footer-root').innerHTML = getFooter();
     initPage();
 
-    // 12. SPINNER жүктеу кезінде
     showSpinner();
     try {
       const [quizRes, courseRes, scoreRes] = await Promise.all([
@@ -152,7 +145,6 @@
     }
     hideSpinner();
 
-    // URL-ден course id алу
     const params = new URLSearchParams(window.location.search);
     const cid = params.get('course');
     if (cid) {
@@ -160,7 +152,6 @@
       if (quiz) { startQuiz(quiz.courseId); return; }
     }
 
-    // 15. PROGRESS — сақталған тест нәтижелерін оқу
     const progress = getProgress();
     if (progress.lastQuizCourse) {
       showToast(
@@ -214,7 +205,6 @@
     const course = allCourses.find(c => c.id === courseId);
     const title = course ? (currentLang === 'kz' ? course.kz.title : course.en.title) : '';
 
-    // 15. PROGRESS — бастаған тестті сақтау
     saveProgress({ lastQuizCourse: title, lastQuizId: courseId });
 
     document.getElementById('quizSelect').style.display  = 'none';
@@ -281,9 +271,9 @@
 
     if (idx === correct) {
       score++;
-      showToast(currentLang === 'kz' ? '✅ Дұрыс!' : '✅ Correct!', 'success');
+      showToast(currentLang === 'kz' ? 'Дұрыс!' : ' Correct!', 'success');
     } else {
-      showToast(currentLang === 'kz' ? '❌ Қате!' : '❌ Wrong!', 'error');
+      showToast(currentLang === 'kz' ? 'Қате!' : ' Wrong!', 'error');
     }
 
     document.getElementById('qScore').textContent = score + ' pts';
@@ -300,7 +290,6 @@
     showQuestion();
   }
 
-  // 9. ЕСЕПТЕУ ЛОГИКАСЫ — нәтиже автоматты есептеледі
   async function showResult() {
     document.getElementById('quizArea').style.display  = 'none';
     document.getElementById('quizResult').style.display = 'block';
@@ -308,7 +297,6 @@
     const total = currentQuiz.questions.length;
     const pct   = Math.round((score / total) * 100);
 
-    // 9. UI-де дұрыс көрсету
     document.getElementById('resultScore').textContent = pct + '%';
     document.getElementById('progressFill').style.width = '100%';
 
@@ -318,7 +306,6 @@
       : `${score} correct out of ${total} questions`;
     document.getElementById('resultText').textContent = msg;
 
-    // Детальді нәтиже
     document.getElementById('resultDetail').innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div style="text-align:center;padding:12px;background:var(--bg-secondary);border-radius:8px;">
@@ -336,7 +323,6 @@
       </div>
     `;
 
-    // 15. PROGRESS — нәтижені сақтау (LocalStorage)
     saveProgress({
       lastQuizScore:   pct,
       lastQuizGrade:   grade,
@@ -349,7 +335,6 @@
       pct >= 60 ? 'success' : 'warning'
     );
 
-    // API-ға сақтау
     try {
       const user = getUser();
       const body = {
@@ -366,7 +351,7 @@
       });
       const data = await res.json();
       if (data.entry) userScores[data.entry.courseId] = data.entry;
-    } catch (e) { /* silent */ }
+    } catch (e) {  }
 
     setLanguage(currentLang);
   }
@@ -386,7 +371,6 @@
     renderQuizGrid();
   }
 
-  // Flashcard functions
   function showFlashcard() {
     const q = currentQuiz.questions[fcIndex];
     document.getElementById('fcNum').textContent      = fcIndex + 1;

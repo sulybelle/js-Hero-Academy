@@ -41,7 +41,7 @@
 
     <div class="form-group">
       <label><span class="lang-en">Password</span><span class="lang-kz">Пароль</span></label>
-      <!-- 13. PASSWORD SHOW/HIDE -->
+      
       <div class="pass-wrap">
         <input type="password" id="loginPassword" placeholder="••••••">
         <button type="button" class="pass-toggle" onclick="togglePass('loginPassword', this)" title="Show/Hide">👁</button>
@@ -69,21 +69,17 @@
     document.getElementById('footer-root').innerHTML = getFooter();
     initPage();
 
-    // 2. LOCAL STORAGE — сақталған email оқу
     const saved = JSON.parse(localStorage.getItem('jsha_last_email') || 'null');
     if (saved) document.getElementById('loginEmail').value = saved;
 
-    // Real-time validation
     document.getElementById('loginEmail').addEventListener('input',    validateEmail);
     document.getElementById('loginPassword').addEventListener('input', validatePass);
 
-    // Enter key submit
     document.getElementById('loginPassword').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') submitLogin();
     });
-  });
+  }); 
 
-  // 13. PASSWORD SHOW/HIDE
   function togglePass(inputId, btn) {
     const input = document.getElementById(inputId);
     if (input.type === 'password') {
@@ -94,8 +90,7 @@
       btn.textContent = '👁';
     }
   }
-
-  // 1. FORM VALIDATION
+ 
   function setFieldState(inputId, errId, isValid, msg) {
     const input = document.getElementById(inputId);
     const err   = document.getElementById(errId);

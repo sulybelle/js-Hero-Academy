@@ -6,7 +6,6 @@ const WEB_URL = process.env.WEB_URL || 'http://localhost:3003';
 
 const bot = new Telegraf(BOT_TOKEN);
 
-// /start - Бастау
 bot.command('start', async (ctx) => {
   const welcomeMsg = `🦸‍♂️ <b>JS Heroes Academy</b> ботына қош келдіңіз!
 
@@ -24,8 +23,7 @@ bot.command('start', async (ctx) => {
     reply_markup: mainMenuKeyboard()
   });
 });
-
-// /help - Көмек
+ 
 bot.command('help', async (ctx) => {
   const helpMsg = `📖 <b>Бот командалары:</b>
 
@@ -41,8 +39,7 @@ bot.command('help', async (ctx) => {
 
   await ctx.replyWithHTML(helpMsg);
 });
-
-// /courses - Курстар тізімі
+ 
 bot.command('courses', async (ctx) => {
   try {
     const fetch = (await import('node-fetch')).default;
@@ -69,8 +66,7 @@ bot.command('courses', async (ctx) => {
     await ctx.reply('❌ Серверге қосылу мүмкін болмады. Кейінірек қайта көріңіз.');
   }
 });
-
-// Callback для следующих курсов
+ 
 bot.action('courses_next', async (ctx) => {
   try {
     await ctx.answerCbQuery();
@@ -103,17 +99,15 @@ bot.action('courses_prev', async (ctx) => {
   ctx.answerCbQuery();
   ctx.reply('Алғашқы 10 курс /courses командасымен қараңыз 👆');
 });
-
-// /quiz - Тесттер тізімі
+ 
 bot.command('quiz', async (ctx) => {
   const args = ctx.message.text.split(' ');
   const courseId = args[1];
 
   if (courseId) {
-    // Конкретный тест
-    await startQuiz(ctx, parseInt(courseId));
+     await startQuiz(ctx, parseInt(courseId));
   } else {
-    // Список всех тестов
+ 
     try {
       const fetch = (await import('node-fetch')).default;
       const [quizRes, courseRes] = await Promise.all([
@@ -133,8 +127,7 @@ bot.command('quiz', async (ctx) => {
       });
       msg += 'ℹ️ Тест нөмірін басып, тестті сайтта ашыңыз';
 
-      // Создаем inline кнопки для первых 5 тестов
-      const buttons = quizzes.slice(0, 5).map(q => {
+       const buttons = quizzes.slice(0, 5).map(q => {
         const c = courses.find(c => c.id === q.courseId);
         return [Markup.button.url(`📝 ${c ? c.en.title.substring(0, 25) : 'Test'}`, `${WEB_URL}/quiz?course=${q.courseId}`)];
       });
@@ -152,8 +145,7 @@ bot.command('quiz', async (ctx) => {
   }
 });
 
-// /stats - Статистика
-bot.command('stats', async (ctx) => {
+ bot.command('stats', async (ctx) => {
   try {
     const fetch = (await import('node-fetch')).default;
     const [usersRes, coursesRes, scoresRes] = await Promise.all([
@@ -183,8 +175,7 @@ bot.command('stats', async (ctx) => {
   }
 });
 
-// /contact - Байланыс
-bot.command('contact', async (ctx) => {
+ bot.command('contact', async (ctx) => {
   await ctx.replyWithHTML(
     `📞 <b>Байланыс ақпараты:</b>
 
@@ -201,8 +192,7 @@ bot.command('contact', async (ctx) => {
   );
 });
 
-// ===== HELPERS =====
-
+ 
 async function startQuiz(ctx, courseId) {
   try {
     const fetch = (await import('node-fetch')).default;
@@ -246,21 +236,18 @@ function mainMenuKeyboard() {
   ]).resize();
 }
 
-// ===== TEXT HANDLERS =====
-
+ 
 bot.hears('📚 Курстар', (ctx) => ctx.replyWithHTML('📚 Курстар тізімі үшін /courses жазыңыз'));
 bot.hears('🎯 Тесттер', (ctx) => ctx.replyWithHTML('🎯 Тесттер үшін /quiz жазыңыз'));
 bot.hears('📊 Статистика', (ctx) => ctx.replyWithHTML('📊 Статистика үшін /stats жазыңыз'));
 bot.hears('📞 Байланыс', (ctx) => ctx.replyWithHTML('📞 Байланыс үшін /contact жазыңыз'));
 
-// Обработка ошибок
-bot.catch((err, ctx) => {
+ bot.catch((err, ctx) => {
   console.error(`Ошибка для ${ctx.updateType}`, err);
   ctx.reply('❌ Қате орын алды. Кейінірек қайта көріңіз.');
 });
 
-// ===== START BOT =====
-async function startBot() {
+ async function startBot() {
   if (BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE') {
     console.log('\n🔴 Telegram бот іске қосылмады — токен орнатылмаған.\n');
     console.log('📋 Ботты іске қосу үшін:');
@@ -274,10 +261,8 @@ async function startBot() {
   }
 
   try {
-    // Удаляем вебхук перед запуском
-    await bot.telegram.deleteWebhook();
-    // Запускаем polling
-    await bot.launch();
+     await bot.telegram.deleteWebhook();
+     await bot.launch();
     console.log('✅ Telegram бот іске қосылды!');
     console.log('🤖 @ваш_бот_username');
     console.log('📊 Командалар: /start, /courses, /quiz, /stats, /help');
@@ -285,14 +270,12 @@ async function startBot() {
     console.error('❌ Ботты іске қосу сәтсіз:', err.message);
   }
 }
-
-// Enable graceful stop
+ 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 module.exports = { startBot, bot };
-
-// Автозапуск если файл запущен напрямую
+ 
 if (require.main === module) {
   startBot();
 }
