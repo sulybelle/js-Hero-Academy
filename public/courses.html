@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Courses — JS Heroes Academy</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="header-root"></div>
+
+  <main> 
+    <div class="shield-header">
+      <div class="shield-icon">🛡️</div>
+      <h1>S.H.I.E.L.D. DATABASE</h1>
+      <p class="subtitle">✦ STRATEGIC HOMELAND INTERVENTION, ENFORCEMENT AND LOGISTICS DIVISION</p>
+    </div>
+ 
+    <div class="search-filter-bar">
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <input type="text" class="search-input" id="searchInput" placeholder="SEARCH PROTOCOLS...">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label"><span class="lang-en">DIFFICULTY LEVEL</span><span class="lang-kz">ҚИЫНДЫҚ ДЕҢГЕЙІ</span></span>
+          <div class="filter-pills" id="difficultyPills">
+            <button class="pill active" data-val="all">ALL</button>
+            <button class="pill" data-val="beginner">BEGINNER</button>
+            <button class="pill" data-val="intermediate">INTERMEDIATE</button>
+            <button class="pill" data-val="advanced">ADVANCED</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label"><span class="lang-en">HERO TYPE</span><span class="lang-kz">БАТЫР ТҮРІ</span></span>
+          <div class="filter-pills" id="heroPills">
+            <button class="pill active" data-val="all">ALL</button>
+            <button class="pill" data-val="tech">TECH</button>
+            <button class="pill" data-val="magic">MAGIC</button>
+            <button class="pill" data-val="mutation">MUTATION</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="files-count">
+      <span>FILES FOUND: <strong id="filesCount">0</strong></span>
+      <span>📋 AUTH LEVEL: ALPHA</span>
+    </div>
+
+    <div class="courses-list" id="coursesList"></div>
+  </main>
+
+  <div id="footer-root"></div>
+
+  <script src="/js/main.js"></script>
+  <script>
+    let allCourses = [];
+    let filterDiff = 'all';
+    let filterHero = 'all';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('header-root').innerHTML = getHeader('courses');
+      document.getElementById('footer-root').innerHTML = getFooter();
+      initPage();
+
+      const res = await fetch('/api/courses');
+      allCourses = await res.json();
+      renderCourses();
+
+      document.getElementById('searchInput').addEventListener('input', renderCourses);
+
+      document.querySelectorAll('#difficultyPills .pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#difficultyPills .pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          filterDiff = btn.dataset.val;
+          renderCourses();
+        });
+      });
+
+      document.querySelectorAll('#heroPills .pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#heroPills .pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          filterHero = btn.dataset.val;
+          renderCourses();
+        });
+      });
+    });
+
+    function renderCourses() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      let filtered = allCourses;
+      if (q) filtered = filtered.filter(c => c.en.title.toLowerCase().includes(q) || c.kz.title.toLowerCase().includes(q));
+      if (filterDiff !== 'all') filtered = filtered.filter(c => c.category === filterDiff);
+      if (filterHero !== 'all') filtered = filtered.filter(c => c.heroType === filterHero);
+
+      document.getElementById('filesCount').textContent = filtered.length;
+      const list = document.getElementById('coursesList');
+      if (filtered.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px;">No protocols found</p>';
+        return;
+      }
+      list.innerHTML = filtered.map(c => createCourseCardHorizontal(c)).join('');
+      setLanguage(currentLang);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS Heroes Academy</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="header-root"></div>
+
+  <main>
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-text">
+          <div class="hero-badge">✦ <span class="lang-en">WELCOME TO THE ACADEMY</span><span class="lang-kz">АКАДЕМИЯҒА ҚОШ КЕЛДІҢІЗ</span></div>
+          <h1>BECOME A JS<br>LEGEND!</h1>
+          <p class="hero-desc">
+            <span class="lang-en">Master the language of the web in Kazakh and English. Assemble your coding skills today.</span>
+            <span class="lang-kz">Веб тілін қазақ және ағылшын тілдерінде меңгеріңіз. Бүгін кодтау дағдыларыңызды жинаңыз.</span>
+          </p>
+          <a href="/courses" class="btn btn-primary">
+            <span class="lang-en">START TRAINING</span><span class="lang-kz">ОҚУДЫ БАСТАУ</span> ▶
+          </a>
+        </div>
+        <div class="hero-visual">
+          <img src="https://avatars.mds.yandex.net/i?id=d7c66c5096d1a2ed46590fddb8cc95a5_l-12532291-images-thumbs&n=13" alt="Hero" class="hero-img">
+          <div class="code-float top">const hero = new JS();</div>
+          <div class="code-float bottom">await hero.saveWorld();</div>
+          <div class="chat-bubble">
+            <div class="chat-avatar">🤖</div>
+            <div class="chat-text">
+              <span class="lang-en">Great job! Your code is as strong as Vibranium!</span>
+              <span class="lang-kz">Жарайсыз! Сіздің кодыңыз Вибраниум сияқты мықты!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <section>
+      <div class="section-header">
+        <h2><span class="lang-en">POPULAR <span>COURSES</span></span><span class="lang-kz">ТАНЫМАЛ <span>КУРСТАР</span></span></h2>
+        <p><span class="lang-en">Start your JavaScript hero journey with our top courses</span><span class="lang-kz">JavaScript батыр жолыңызды ең танымал курстармен бастаңыз</span></p>
+      </div>
+      <div class="cards-grid" id="coursesGrid"></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num">20</div><div class="stat-label"><span class="lang-en">Courses</span><span class="lang-kz">Курстар</span></div></div>
+        <div class="stat-card"><div class="stat-num">20</div><div class="stat-label"><span class="lang-en">Quizzes</span><span class="lang-kz">Тесттер</span></div></div>
+        <div class="stat-card"><div class="stat-num">2</div><div class="stat-label"><span class="lang-en">Languages</span><span class="lang-kz">Тілдер</span></div></div>
+        <div class="stat-card"><div class="stat-num">∞</div><div class="stat-label"><span class="lang-en">Access</span><span class="lang-kz">Қол жетімділік</span></div></div>
+      </div>
+    </section>
+ 
+    <section>
+      <div class="section-header">
+        <h2><span class="lang-en">HERO <span>REVIEWS</span></span><span class="lang-kz">БАТЫРЛАР <span>ПІКІРЛЕРІ</span></span></h2>
+        <p><span class="lang-en">What our heroes say about the academy</span><span class="lang-kz">Біздің батырлар академия туралы не дейді</span></p>
+      </div>
+      <div class="reviews-grid" id="reviewsGrid"></div>
+      <div class="review-form" id="reviewForm">
+        <h4 style="margin-bottom:12px;font-size:15px;">
+          <span class="lang-en">Leave a Review</span><span class="lang-kz">Пікір қалдыру</span>
+        </h4>
+        <div class="alert alert-success" id="reviewSuccess"></div>
+        <input type="text" id="reviewName" class="search-input" style="margin-bottom:10px;width:100%;font-family:var(--font-body);" placeholder="Your name / Сіздің атыңыз">
+        <div class="star-select" id="starSelect">
+          <span onclick="selectStar(1)">★</span>
+          <span onclick="selectStar(2)">★</span>
+          <span onclick="selectStar(3)">★</span>
+          <span onclick="selectStar(4)">★</span>
+          <span onclick="selectStar(5)">★</span>
+        </div>
+        <textarea id="reviewText" placeholder="Write your review... / Пікіріңізді жазыңыз..."></textarea>
+        <button class="btn btn-primary btn-sm mt-16" onclick="submitReview()">
+          <span class="lang-en">Submit</span><span class="lang-kz">Жіберу</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-root"></div>
+
+  <script src="/js/main.js"></script>
+  <script>
+    let selectedRating = 5;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('header-root').innerHTML = getHeader('home');
+      document.getElementById('footer-root').innerHTML = getFooter();
+      initPage();
+      selectStar(5);
+
+      const res = await fetch('/api/courses');
+      const courses = await res.json();
+      document.getElementById('coursesGrid').innerHTML = courses.slice(0, 6).map(c => createCourseCardVertical(c)).join('');
+      setLanguage(currentLang);
+
+      loadReviews();
+    });
+
+    async function loadReviews() {
+      const res = await fetch('/api/reviews');
+      const reviews = await res.json();
+      const grid = document.getElementById('reviewsGrid');
+      if (reviews.length === 0) {
+        grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:20px;"><span class="lang-en">No reviews yet. Be the first hero!</span><span class="lang-kz">Пікірлер жоқ. Бірінші батыр болыңыз!</span></p>';
+        setLanguage(currentLang);
+        return;
+      }
+      grid.innerHTML = reviews.slice(-6).reverse().map(r => `
+        <div class="review-card">
+          <div class="review-header">
+            <div class="review-avatar">${r.userName.charAt(0).toUpperCase()}</div>
+            <div>
+              <div class="review-name">${r.userName}</div>
+              <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+            </div>
+          </div>
+          <div class="review-text">${r.text}</div>
+          <div class="review-date">${new Date(r.createdAt).toLocaleDateString()}</div>
+        </div>
+      `).join('');
+    }
+
+    function selectStar(n) {
+      selectedRating = n;
+      document.querySelectorAll('#starSelect span').forEach((s, i) => {
+        s.classList.toggle('active', i < n);
+      });
+    }
+
+    async function submitReview() {
+      const name = document.getElementById('reviewName').value.trim();
+      const text = document.getElementById('reviewText').value.trim();
+      if (!name || !text) return;
+      await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userName: name, text, rating: selectedRating })
+      });
+      document.getElementById('reviewName').value = '';
+      document.getElementById('reviewText').value = '';
+      const alert = document.getElementById('reviewSuccess');
+      alert.textContent = currentLang === 'kz' ? 'Пікіріңіз сәтті жіберілді!' : 'Review submitted successfully!';
+      alert.style.display = 'block';
+      setTimeout(() => alert.style.display = 'none', 3000);
+      loadReviews();
+    }
+  </script>
+</body>
+</html>
