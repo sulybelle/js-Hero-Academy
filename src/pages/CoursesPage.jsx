@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { api } from '../lib/api';
 import { getEnrolledIds, setEnrolledIds } from '../lib/storage';
 import AppLink from '../components/AppLink';
 
-export default function CoursesPage({ navigate }) {
+export default function CoursesPage() {
   const { lang, user, showToast, toggleLike, isLiked, saveProgress } = useApp();
+  const navigate = useNavigate();
   const [allCourses, setAllCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -312,7 +314,7 @@ export default function CoursesPage({ navigate }) {
               >
                 {isLiked(modalCourse.id) ? '❤️ Saved' : '🤍 Save'}
               </button>
-              <AppLink to={`/course/${modalCourse.id}`} navigate={navigate} className="btn btn-secondary btn-sm">
+              <AppLink to={`/course/${modalCourse.id}`} className="btn btn-secondary btn-sm">
                 {lang === 'kz' ? 'Толығырақ →' : 'View Course →'}
               </AppLink>
             </div>

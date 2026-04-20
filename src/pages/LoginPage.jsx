@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useApp } from '../context/AppContext';
 import { getLastEmail, loginFromLS, setLastEmail } from '../lib/storage';
+import { validateEmail, validatePassword } from '../lib/validation';
 import SpinnerOverlay from '../components/SpinnerOverlay';
 import AppLink from '../components/AppLink';
 
-export default function LoginPage({ navigate }) {
+export default function LoginPage() {
   const { lang, login, showToast } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,33 +23,12 @@ export default function LoginPage({ navigate }) {
     if (saved) setEmail(saved);
   }, []);
 
-  const validateEmail = () => {
-    const value = email.trim();
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!value) {
-      return lang === 'kz' ? 'Email енгізіңіз' : 'Enter your email';
-    }
-    if (!re.test(value)) {
-      return lang === 'kz' ? 'Email форматы дұрыс емес' : 'Invalid email';
-    }
-    return '';
-  };
-
-  const validatePass = () => {
-    if (!password) {
-      return lang === 'kz' ? 'Пароль енгізіңіз' : 'Enter password';
-    }
-    if (password.length < 6) {
-      return lang === 'kz' ? 'Кемінде 6 таңба' : 'Min 6 characters';
-    }
-    return '';
-  };
+  const destination = location.state?.from || '/courses';
 
   const submit = async () => {
     const nextErrors = {
-      email: validateEmail(),
-      password: validatePass(),
+      email: validateEmail(email, lang),
+      password: validatePassword(password, lang),
     };
     setErrors(nextErrors);
 
@@ -60,7 +43,7 @@ export default function LoginPage({ navigate }) {
       login(localResult.user);
       setLastEmail(cleanEmail);
       showToast(lang === 'kz' ? 'Сәтті кірдіңіз!' : 'Welcome back!', 'success');
-      navigate('/courses');
+      navigate(destination, { replace: true });
       setLoading(false);
       return;
     }
@@ -70,7 +53,7 @@ export default function LoginPage({ navigate }) {
       login(data.user);
       setLastEmail(cleanEmail);
       showToast(lang === 'kz' ? 'Сәтті кірдіңіз!' : 'Welcome back!', 'success');
-      navigate('/courses');
+      navigate(destination, { replace: true });
     } catch (error) {
       showToast(error.message || localResult.error, 'error');
     } finally {
@@ -99,6 +82,7 @@ export default function LoginPage({ navigate }) {
                 setErrors((prev) => ({ ...prev, email: '' }));
               }}
               className={errors.email ? 'input-error' : email ? 'input-success' : ''}
+              aria-invalid={Boolean(errors.email)}
             />
             <span className="field-error">{errors.email}</span>
           </div>
@@ -119,6 +103,7 @@ export default function LoginPage({ navigate }) {
                   if (e.key === 'Enter') submit();
                 }}
                 className={errors.password ? 'input-error' : password ? 'input-success' : ''}
+                aria-invalid={Boolean(errors.password)}
               />
               <button type="button" className="pass-toggle" onClick={() => setShowPass((prev) => !prev)}>
                 {showPass ? '🙈' : '👁'}
@@ -133,9 +118,7 @@ export default function LoginPage({ navigate }) {
 
           <p className="form-link">
             {lang === 'kz' ? 'Аккаунтыңыз жоқ па?' : "Don't have an account?"}{' '}
-            <AppLink to="/register" navigate={navigate}>
-              {lang === 'kz' ? 'Тіркелу' : 'Register'}
-            </AppLink>
+            <AppLink to="/register">{lang === 'kz' ? 'Тіркелу' : 'Register'}</AppLink>
           </p>
         </div>
       </main>

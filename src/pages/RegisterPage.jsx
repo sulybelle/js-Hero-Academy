@@ -1,12 +1,21 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useApp } from '../context/AppContext';
 import { saveProgress, saveUserToLS } from '../lib/storage';
+import {
+  validateEmail,
+  validateName,
+  validatePassword,
+  validatePasswordConfirm,
+  validatePhone,
+} from '../lib/validation';
 import SpinnerOverlay from '../components/SpinnerOverlay';
 import AppLink from '../components/AppLink';
 
-export default function RegisterPage({ navigate }) {
+export default function RegisterPage() {
   const { lang, login, showToast } = useApp();
+  const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -23,52 +32,22 @@ export default function RegisterPage({ navigate }) {
 
   const [errors, setErrors] = useState({});
 
-  const validateName = () => {
-    const v = form.name.trim();
-    if (!v) return lang === 'kz' ? 'Атыңызды енгізіңіз' : 'Please enter your name';
-    if (v.length < 2) return lang === 'kz' ? 'Кемінде 2 таңба' : 'Min 2 characters';
-    return '';
-  };
-
-  const validatePhone = () => {
-    const v = form.phone.trim();
-    const re = /^\+?[\d\s\-()]{7,15}$/;
-    if (!v) return lang === 'kz' ? 'Телефон нөмірін енгізіңіз' : 'Enter phone number';
-    if (!re.test(v)) return lang === 'kz' ? 'Нөмір дұрыс емес' : 'Invalid phone number';
-    return '';
-  };
-
-  const validateEmail = () => {
-    const v = form.email.trim();
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!v) return lang === 'kz' ? 'Email енгізіңіз' : 'Enter your email';
-    if (!re.test(v)) return lang === 'kz' ? 'Email форматы дұрыс емес' : 'Invalid email format';
-    return '';
-  };
-
-  const validatePass = () => {
-    if (!form.password) return lang === 'kz' ? 'Пароль енгізіңіз' : 'Enter password';
-    if (form.password.length < 6) return lang === 'kz' ? 'Кемінде 6 таңба' : 'Min 6 characters';
-    return '';
-  };
-
-  const validateConfirm = () => {
-    if (!form.confirm) return lang === 'kz' ? 'Парольді растаңыз' : 'Confirm your password';
-    if (form.confirm !== form.password) {
-      return lang === 'kz' ? 'Парольдер сәйкес келмейді' : 'Passwords do not match';
-    }
-    return '';
-  };
-
   const validateStep = (stepNo) => {
     if (stepNo === 1) {
-      const nextErrors = { name: validateName(), phone: validatePhone() };
+      const nextErrors = {
+        name: validateName(form.name, lang),
+        phone: validatePhone(form.phone, lang),
+      };
       setErrors((prev) => ({ ...prev, ...nextErrors }));
       return !nextErrors.name && !nextErrors.phone;
     }
 
     if (stepNo === 2) {
-      const nextErrors = { email: validateEmail(), password: validatePass(), confirm: validateConfirm() };
+      const nextErrors = {
+        email: validateEmail(form.email, lang),
+        password: validatePassword(form.password, lang),
+        confirm: validatePasswordConfirm(form.password, form.confirm, lang),
+      };
       setErrors((prev) => ({ ...prev, ...nextErrors }));
       return !nextErrors.email && !nextErrors.password && !nextErrors.confirm;
     }
@@ -82,8 +61,8 @@ export default function RegisterPage({ navigate }) {
   };
 
   const submit = async () => {
-    if (!validateStep(2)) {
-      setStep(2);
+    if (!validateStep(1) || !validateStep(2)) {
+      setStep(step === 1 ? 1 : 2);
       return;
     }
 
@@ -108,12 +87,12 @@ export default function RegisterPage({ navigate }) {
       login(data.user || lsResult.user);
       saveProgress({ registered: true, percent: 10 });
       showToast(lang === 'kz' ? 'Тіркелу сәтті!' : 'Registration successful!', 'success');
-      navigate('/courses');
+      navigate('/courses', { replace: true });
     } catch {
       login(lsResult.user);
       saveProgress({ registered: true, percent: 10 });
       showToast(lang === 'kz' ? 'Тіркелу сәтті! (офлайн)' : 'Registered (offline)!', 'success');
-      navigate('/courses');
+      navigate('/courses', { replace: true });
     } finally {
       setLoading(false);
     }
@@ -150,9 +129,13 @@ export default function RegisterPage({ navigate }) {
                 <input
                   type="text"
                   value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, name: e.target.value }));
+                    setErrors((prev) => ({ ...prev, name: '' }));
+                  }}
                   placeholder="Айбек Серікұлы"
                   className={errors.name ? 'input-error' : form.name ? 'input-success' : ''}
+                  aria-invalid={Boolean(errors.name)}
                 />
                 <span className="field-error">{errors.name || ''}</span>
               </div>
@@ -162,9 +145,13 @@ export default function RegisterPage({ navigate }) {
                 <input
                   type="tel"
                   value={form.phone}
-                  onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, phone: e.target.value }));
+                    setErrors((prev) => ({ ...prev, phone: '' }));
+                  }}
                   placeholder="+7 700 000 00 00"
                   className={errors.phone ? 'input-error' : form.phone ? 'input-success' : ''}
+                  aria-invalid={Boolean(errors.phone)}
                 />
                 <span className="field-error">{errors.phone || ''}</span>
               </div>
@@ -188,9 +175,13 @@ export default function RegisterPage({ navigate }) {
                 <input
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, email: e.target.value }));
+                    setErrors((prev) => ({ ...prev, email: '' }));
+                  }}
                   placeholder="email@example.com"
                   className={errors.email ? 'input-error' : form.email ? 'input-success' : ''}
+                  aria-invalid={Boolean(errors.email)}
                 />
                 <span className="field-error">{errors.email || ''}</span>
               </div>
@@ -201,9 +192,13 @@ export default function RegisterPage({ navigate }) {
                   <input
                     type={showPass ? 'text' : 'password'}
                     value={form.password}
-                    onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                    onChange={(e) => {
+                      setForm((prev) => ({ ...prev, password: e.target.value }));
+                      setErrors((prev) => ({ ...prev, password: '' }));
+                    }}
                     placeholder={lang === 'kz' ? 'Кемінде 6 таңба' : 'Min 6 chars'}
                     className={errors.password ? 'input-error' : form.password ? 'input-success' : ''}
+                    aria-invalid={Boolean(errors.password)}
                   />
                   <button type="button" className="pass-toggle" onClick={() => setShowPass((prev) => !prev)}>
                     {showPass ? '🙈' : '👁'}
@@ -218,9 +213,13 @@ export default function RegisterPage({ navigate }) {
                   <input
                     type={showConfirm ? 'text' : 'password'}
                     value={form.confirm}
-                    onChange={(e) => setForm((prev) => ({ ...prev, confirm: e.target.value }))}
+                    onChange={(e) => {
+                      setForm((prev) => ({ ...prev, confirm: e.target.value }));
+                      setErrors((prev) => ({ ...prev, confirm: '' }));
+                    }}
                     placeholder={lang === 'kz' ? 'Парольді қайталаңыз' : 'Repeat password'}
                     className={errors.confirm ? 'input-error' : form.confirm ? 'input-success' : ''}
+                    aria-invalid={Boolean(errors.confirm)}
                   />
                   <button type="button" className="pass-toggle" onClick={() => setShowConfirm((prev) => !prev)}>
                     {showConfirm ? '🙈' : '👁'}
@@ -278,9 +277,7 @@ export default function RegisterPage({ navigate }) {
 
           <p className="form-link">
             {lang === 'kz' ? 'Аккаунтыңыз бар ма?' : 'Already have an account?'}{' '}
-            <AppLink to="/login" navigate={navigate}>
-              {lang === 'kz' ? 'Кіру' : 'Login'}
-            </AppLink>
+            <AppLink to="/login">{lang === 'kz' ? 'Кіру' : 'Login'}</AppLink>
           </p>
         </div>
       </main>

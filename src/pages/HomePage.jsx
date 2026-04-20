@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { getCommentsFromLS, saveCommentToLS } from '../lib/storage';
 import { useApp } from '../context/AppContext';
 import AppLink from '../components/AppLink';
+import { validateMessage, validateName } from '../lib/validation';
 
 const FAQ_DATA = [
   {
@@ -37,7 +38,7 @@ const FAQ_DATA = [
   },
 ];
 
-export default function HomePage({ navigate }) {
+export default function HomePage() {
   const { lang, showToast, toggleLike, isLiked } = useApp();
   const [tab, setTab] = useState('courses');
   const [openFaq, setOpenFaq] = useState(null);
@@ -47,6 +48,7 @@ export default function HomePage({ navigate }) {
   const [reviewName, setReviewName] = useState('');
   const [reviewText, setReviewText] = useState('');
   const [rating, setRating] = useState(5);
+  const [reviewErrors, setReviewErrors] = useState({ name: '', text: '' });
 
   const topCourses = useMemo(() => courses.slice(0, 6), [courses]);
 
@@ -104,8 +106,14 @@ export default function HomePage({ navigate }) {
   };
 
   const submitReview = async () => {
-    if (!reviewName.trim() || !reviewText.trim()) {
-      showToast(lang === 'kz' ? 'Барлық өрістерді толтырыңыз' : 'Fill in all fields', 'warning');
+    const nextErrors = {
+      name: validateName(reviewName, lang),
+      text: validateMessage(reviewText, lang, 12),
+    };
+    setReviewErrors(nextErrors);
+
+    if (nextErrors.name || nextErrors.text) {
+      showToast(lang === 'kz' ? 'Форманы дұрыс толтырыңыз' : 'Please fix the form errors', 'warning');
       return;
     }
 
@@ -126,6 +134,7 @@ export default function HomePage({ navigate }) {
     setReviewName('');
     setReviewText('');
     setRating(5);
+    setReviewErrors({ name: '', text: '' });
     showToast(lang === 'kz' ? 'Пікір жіберілді! ⭐' : 'Review submitted! ⭐', 'success');
     await loadReviews();
   };
@@ -146,7 +155,7 @@ export default function HomePage({ navigate }) {
                 ? 'Веб тілін қазақ және ағылшын тілдерінде меңгеріңіз. Бүгін кодтау дағдыларыңызды жинаңыз.'
                 : 'Master the language of the web in Kazakh and English. Assemble your coding skills today.'}
             </p>
-            <AppLink to="/courses" navigate={navigate} className="btn btn-primary">
+            <AppLink to="/courses" className="btn btn-primary">
               {lang === 'kz' ? 'ОҚУДЫ БАСТАУ' : 'START TRAINING'} ▶
             </AppLink>
           </div>
@@ -214,7 +223,7 @@ export default function HomePage({ navigate }) {
                   const desc = lang === 'kz' ? course.kz.desc : course.en.desc;
 
                   return (
-                    <AppLink key={course.id} to={`/course/${course.id}`} navigate={navigate} className="v-card">
+                    <AppLink key={course.id} to={`/course/${course.id}`} className="v-card">
                       <img className="v-card-img" src={course.img} alt={title} loading="lazy" />
                       <div className="v-card-body">
                         <div className="card-tags" style={{ marginBottom: '8px' }}>
@@ -311,8 +320,13 @@ export default function HomePage({ navigate }) {
                 style={{ marginBottom: '10px', width: '100%', fontFamily: 'var(--font-body)' }}
                 placeholder="Your name / Сіздің атыңыз"
                 value={reviewName}
-                onChange={(e) => setReviewName(e.target.value)}
+                onChange={(e) => {
+                  setReviewName(e.target.value);
+                  setReviewErrors((prev) => ({ ...prev, name: '' }));
+                }}
+                aria-invalid={Boolean(reviewErrors.name)}
               />
+              <span className="field-error">{reviewErrors.name}</span>
 
               <div className="star-select" id="starSelect">
                 {[1, 2, 3, 4, 5].map((n) => (
@@ -324,8 +338,13 @@ export default function HomePage({ navigate }) {
 
               <textarea
                 value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
+                onChange={(e) => {
+                  setReviewText(e.target.value);
+                  setReviewErrors((prev) => ({ ...prev, text: '' }));
+                }}
+                className={reviewErrors.text ? 'input-error' : reviewText ? 'input-success' : ''}
                 placeholder="Write your review... / Пікіріңізді жазыңыз..."
+                aria-invalid={Boolean(reviewErrors.text)}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -340,6 +359,7 @@ export default function HomePage({ navigate }) {
                   marginBottom: '8px',
                 }}
               />
+              <span className="field-error">{reviewErrors.text}</span>
 
               <button className="btn btn-primary btn-sm" onClick={submitReview} type="button">
                 {lang === 'kz' ? 'Жіберу' : 'Submit'}

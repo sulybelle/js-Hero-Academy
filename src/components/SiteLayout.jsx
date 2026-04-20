@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import AppLink from './AppLink';
 
@@ -35,8 +36,13 @@ function TelegramFloat() {
   );
 }
 
-export default function SiteLayout({ children, pageKey, navigate }) {
+function navLinkClass({ isActive }) {
+  return isActive ? 'active' : '';
+}
+
+export default function SiteLayout({ children }) {
   const { lang, theme, user, toggleLang, toggleTheme, logout } = useApp();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const authName = useMemo(() => {
@@ -54,45 +60,40 @@ export default function SiteLayout({ children, pageKey, navigate }) {
   };
 
   const closeMenu = () => setMenuOpen(false);
+  const content = children ?? <Outlet />;
 
   return (
     <>
       <header>
         <div className="header-inner">
-          <AppLink to="/" navigate={navigate} onClick={closeMenu}>
+          <AppLink to="/" onClick={closeMenu}>
             <Logo />
           </AppLink>
 
-          <div className="hamburger" onClick={() => setMenuOpen((prev) => !prev)}>
+          <button className="hamburger" onClick={() => setMenuOpen((prev) => !prev)} type="button" aria-label="Toggle menu">
             <span />
             <span />
             <span />
-          </div>
+          </button>
 
           <nav>
             <div className={navClass}>
-              <AppLink to="/" navigate={navigate} className={pageKey === 'home' ? 'active' : ''} onClick={closeMenu}>
+              <NavLink to="/" className={navLinkClass} onClick={closeMenu} end>
                 HOME
-              </AppLink>
-              <AppLink
-                to="/courses"
-                navigate={navigate}
-                className={pageKey === 'courses' || pageKey === 'course-detail' ? 'active' : ''}
-                onClick={closeMenu}
-              >
+              </NavLink>
+              <NavLink to="/courses" className={navLinkClass} onClick={closeMenu}>
                 COURSES
-              </AppLink>
-              <AppLink to="/quiz" navigate={navigate} className={pageKey === 'quiz' ? 'active' : ''} onClick={closeMenu}>
+              </NavLink>
+              <NavLink to="/quiz" className={navLinkClass} onClick={closeMenu}>
                 QUIZ
-              </AppLink>
-              <AppLink to="/contact" navigate={navigate} className={pageKey === 'contact' ? 'active' : ''} onClick={closeMenu}>
+              </NavLink>
+              <NavLink to="/contact" className={navLinkClass} onClick={closeMenu}>
                 CONTACT
-              </AppLink>
+              </NavLink>
 
               {user ? (
                 <AppLink
                   to="/courses"
-                  navigate={navigate}
                   className="auth-link"
                   onClick={closeMenu}
                   style={{ color: 'var(--gold)', fontWeight: 600 }}
@@ -100,9 +101,9 @@ export default function SiteLayout({ children, pageKey, navigate }) {
                   {authName}
                 </AppLink>
               ) : (
-                <AppLink to="/login" navigate={navigate} className="btn-login auth-link" onClick={closeMenu}>
+                <NavLink to="/login" className={({ isActive }) => `${isActive ? 'active ' : ''}btn-login auth-link`.trim()} onClick={closeMenu}>
                   LOGIN
-                </AppLink>
+                </NavLink>
               )}
 
               <a
@@ -127,7 +128,7 @@ export default function SiteLayout({ children, pageKey, navigate }) {
         </div>
       </header>
 
-      {children}
+      {content}
 
       <footer>
         <div className="footer-inner">
@@ -144,16 +145,16 @@ export default function SiteLayout({ children, pageKey, navigate }) {
               <h4>{lang === 'kz' ? 'Навигация' : 'Navigation'}</h4>
               <ul>
                 <li>
-                  <AppLink to="/" navigate={navigate}>Home</AppLink>
+                  <AppLink to="/">Home</AppLink>
                 </li>
                 <li>
-                  <AppLink to="/courses" navigate={navigate}>{lang === 'kz' ? 'Курстар' : 'Courses'}</AppLink>
+                  <AppLink to="/courses">{lang === 'kz' ? 'Курстар' : 'Courses'}</AppLink>
                 </li>
                 <li>
-                  <AppLink to="/quiz" navigate={navigate}>{lang === 'kz' ? 'Тест' : 'Quiz'}</AppLink>
+                  <AppLink to="/quiz">{lang === 'kz' ? 'Тест' : 'Quiz'}</AppLink>
                 </li>
                 <li>
-                  <AppLink to="/contact" navigate={navigate}>{lang === 'kz' ? 'Байланыс' : 'Contact'}</AppLink>
+                  <AppLink to="/contact">{lang === 'kz' ? 'Байланыс' : 'Contact'}</AppLink>
                 </li>
               </ul>
             </div>
@@ -161,13 +162,13 @@ export default function SiteLayout({ children, pageKey, navigate }) {
               <h4>{lang === 'kz' ? 'Аккаунт' : 'Account'}</h4>
               <ul>
                 <li>
-                  <AppLink to="/login" navigate={navigate}>{lang === 'kz' ? 'Кіру' : 'Login'}</AppLink>
+                  <AppLink to="/login">{lang === 'kz' ? 'Кіру' : 'Login'}</AppLink>
                 </li>
                 <li>
-                  <AppLink to="/register" navigate={navigate}>{lang === 'kz' ? 'Тіркелу' : 'Register'}</AppLink>
+                  <AppLink to="/register">{lang === 'kz' ? 'Тіркелу' : 'Register'}</AppLink>
                 </li>
                 <li>
-                  <AppLink to="/admin" navigate={navigate}>{lang === 'kz' ? 'Админ' : 'Admin'}</AppLink>
+                  <AppLink to="/admin">{lang === 'kz' ? 'Админ' : 'Admin'}</AppLink>
                 </li>
               </ul>
             </div>

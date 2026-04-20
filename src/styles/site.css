@@ -1218,11 +1218,19 @@ footer {
   margin-bottom: 12px;
 }
 
-.form-group input.input-error {
+.form-group input.input-error,
+.form-group textarea.input-error,
+.form-group select.input-error,
+.review-form input.input-error,
+.review-form textarea.input-error {
   border-color: var(--danger) !important;
 }
 
-.form-group input.input-success {
+.form-group input.input-success,
+.form-group textarea.input-success,
+.form-group select.input-success,
+.review-form input.input-success,
+.review-form textarea.input-success {
   border-color: var(--success) !important;
 }
 
@@ -1258,6 +1266,11 @@ footer {
 
 .pass-toggle:hover {
   color: var(--accent);
+}
+
+.hamburger {
+  border: none;
+  background: transparent;
 }
 
 .steps-indicator {

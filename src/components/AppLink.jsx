@@ -1,27 +1,9 @@
-export default function AppLink({ to, navigate, onClick, children, ...rest }) {
-  const handleClick = (event) => {
-    if (onClick) {
-      onClick(event);
-    }
+import { Link } from 'react-router-dom';
 
-    if (
-      event.defaultPrevented ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey ||
-      rest.target === '_blank'
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    navigate(to);
-  };
-
+export default function AppLink({ to, onClick, children, ...rest }) {
   return (
-    <a href={to} onClick={handleClick} {...rest}>
+    <Link to={to} onClick={onClick} {...rest}>
       {children}
-    </a>
+    </Link>
   );
 }

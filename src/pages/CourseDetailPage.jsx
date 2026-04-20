@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { getCommentsFromLS, saveCommentToLS } from '../lib/storage';
 import { useApp } from '../context/AppContext';
 import { normalizeYouTubeEmbed } from '../lib/youtube';
 import AppLink from '../components/AppLink';
+import { validateMessage, validateName } from '../lib/validation';
 
 function toWatchUrl(embedUrl) {
   const normalized = normalizeYouTubeEmbed(embedUrl);
@@ -12,13 +14,15 @@ function toWatchUrl(embedUrl) {
   return `https://www.youtube.com/watch?v=${match[1]}`;
 }
 
-export default function CourseDetailPage({ courseId, navigate }) {
+export default function CourseDetailPage({ courseId }) {
   const { lang, user, toggleLike, isLiked, showToast, saveProgress } = useApp();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [comments, setComments] = useState([]);
   const [name, setName] = useState('');
   const [text, setText] = useState('');
   const [rating, setRating] = useState(5);
+  const [errors, setErrors] = useState({ name: '', text: '' });
 
   const course = useMemo(() => courses.find((item) => item.id === courseId), [courses, courseId]);
   const prevCourse = useMemo(() => courses.find((item) => item.id === courseId - 1), [courses, courseId]);
@@ -75,8 +79,14 @@ export default function CourseDetailPage({ courseId, navigate }) {
   };
 
   const submitComment = async () => {
-    if (!name.trim() || !text.trim()) {
-      showToast(lang === 'kz' ? 'Барлық өрістерді толтырыңыз' : 'Fill in all fields', 'warning');
+    const nextErrors = {
+      name: validateName(name, lang),
+      text: validateMessage(text, lang, 12),
+    };
+    setErrors(nextErrors);
+
+    if (nextErrors.name || nextErrors.text) {
+      showToast(lang === 'kz' ? 'Форманы дұрыс толтырыңыз' : 'Please fix the form errors', 'warning');
       return;
     }
 
@@ -98,6 +108,7 @@ export default function CourseDetailPage({ courseId, navigate }) {
     setName('');
     setText('');
     setRating(5);
+    setErrors({ name: '', text: '' });
     showToast(lang === 'kz' ? 'Пікір жіберілді! ⭐' : 'Comment saved! ⭐', 'success');
     await loadComments();
   };
@@ -124,7 +135,7 @@ export default function CourseDetailPage({ courseId, navigate }) {
         <div className="course-detail-page" id="courseDetail">
           <AppLink
             to="/courses"
-            navigate={navigate}
+           
             style={{ color: 'var(--accent)', fontSize: '13px', display: 'inline-block', marginBottom: '20px' }}
           >
             ← {lang === 'kz' ? 'Курстарға оралу' : 'Back to Courses'}
@@ -158,12 +169,12 @@ export default function CourseDetailPage({ courseId, navigate }) {
                 {lang === 'kz' ? 'Курсқа жазылу' : 'Enroll in Course'} ✦
               </button>
             ) : (
-              <AppLink to="/register" navigate={navigate} className="btn btn-primary">
+              <AppLink to="/register" className="btn btn-primary">
                 {lang === 'kz' ? 'Тіркеліп жазылу' : 'Register to Enroll'} ✦
               </AppLink>
             )}
 
-            <AppLink to={`/quiz?course=${course.id}`} navigate={navigate} className="btn btn-secondary">
+            <AppLink to={`/quiz?course=${course.id}`} className="btn btn-secondary">
               {lang === 'kz' ? 'Тестке кіру' : 'Take Quiz'} →
             </AppLink>
 
@@ -190,7 +201,7 @@ export default function CourseDetailPage({ courseId, navigate }) {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
             {prevCourse ? (
-              <AppLink to={`/course/${prevCourse.id}`} navigate={navigate} className="btn btn-secondary btn-sm">
+              <AppLink to={`/course/${prevCourse.id}`} className="btn btn-secondary btn-sm">
                 ← {lang === 'kz' ? 'Алдыңғы' : 'Previous'}
               </AppLink>
             ) : (
@@ -198,7 +209,7 @@ export default function CourseDetailPage({ courseId, navigate }) {
             )}
 
             {nextCourse ? (
-              <AppLink to={`/course/${nextCourse.id}`} navigate={navigate} className="btn btn-secondary btn-sm">
+              <AppLink to={`/course/${nextCourse.id}`} className="btn btn-secondary btn-sm">
                 {lang === 'kz' ? 'Келесі' : 'Next'} →
               </AppLink>
             ) : (
@@ -251,11 +262,16 @@ export default function CourseDetailPage({ courseId, navigate }) {
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setErrors((prev) => ({ ...prev, name: '' }));
+              }}
               className="search-input"
               style={{ marginBottom: '10px', width: '100%', fontFamily: 'var(--font-body)' }}
               placeholder="Your name / Сіздің атыңыз"
+              aria-invalid={Boolean(errors.name)}
             />
+            <span className="field-error">{errors.name}</span>
 
             <div className="star-select" id="commentStarSelect">
               {[1, 2, 3, 4, 5].map((n) => (
@@ -267,8 +283,13 @@ export default function CourseDetailPage({ courseId, navigate }) {
 
             <textarea
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                setText(e.target.value);
+                setErrors((prev) => ({ ...prev, text: '' }));
+              }}
+              className={errors.text ? 'input-error' : text ? 'input-success' : ''}
               placeholder="Write a comment... / Пікір жазыңыз..."
+              aria-invalid={Boolean(errors.text)}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -282,6 +303,7 @@ export default function CourseDetailPage({ courseId, navigate }) {
                 minHeight: '80px',
               }}
             />
+            <span className="field-error">{errors.text}</span>
 
             <button className="btn btn-primary btn-sm mt-16" onClick={submitComment}>
               {lang === 'kz' ? 'Жіберу' : 'Submit'}

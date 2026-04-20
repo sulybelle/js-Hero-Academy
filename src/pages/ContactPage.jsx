@@ -1,17 +1,32 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { validateEmail, validateMessage, validateName } from '../lib/validation';
 
 export default function ContactPage() {
   const { lang, showToast } = useApp();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [errors, setErrors] = useState({ name: '', email: '', message: '' });
 
   const submit = (event) => {
     event.preventDefault();
+    const nextErrors = {
+      name: validateName(name, lang),
+      email: validateEmail(email, lang),
+      message: validateMessage(message, lang, 12),
+    };
+    setErrors(nextErrors);
+
+    if (nextErrors.name || nextErrors.email || nextErrors.message) {
+      showToast(lang === 'kz' ? 'Форманы дұрыс толтырыңыз' : 'Please fix the form errors', 'warning');
+      return;
+    }
+
     setName('');
     setEmail('');
     setMessage('');
+    setErrors({ name: '', email: '', message: '' });
     showToast(lang === 'kz' ? 'Хабарламаңыз сәтті жіберілді!' : 'Message sent successfully!', 'success');
   };
 
@@ -80,20 +95,47 @@ export default function ContactPage() {
             <form id="contactForm" onSubmit={submit}>
               <div className="form-group">
                 <label>{lang === 'kz' ? 'Аты-жөні' : 'Name'}</label>
-                <input type="text" placeholder="Your name" required value={name} onChange={(e) => setName(e.target.value)} />
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setErrors((prev) => ({ ...prev, name: '' }));
+                  }}
+                  className={errors.name ? 'input-error' : name ? 'input-success' : ''}
+                  aria-invalid={Boolean(errors.name)}
+                />
+                <span className="field-error">{errors.name}</span>
               </div>
               <div className="form-group">
                 <label>Email</label>
-                <input type="email" placeholder="email@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                <input
+                  type="email"
+                  placeholder="email@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setErrors((prev) => ({ ...prev, email: '' }));
+                  }}
+                  className={errors.email ? 'input-error' : email ? 'input-success' : ''}
+                  aria-invalid={Boolean(errors.email)}
+                />
+                <span className="field-error">{errors.email}</span>
               </div>
               <div className="form-group">
                 <label>{lang === 'kz' ? 'Хабарлама' : 'Message'}</label>
                 <textarea
                   placeholder="Your message..."
-                  required
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={(e) => {
+                    setMessage(e.target.value);
+                    setErrors((prev) => ({ ...prev, message: '' }));
+                  }}
+                  className={errors.message ? 'input-error' : message ? 'input-success' : ''}
+                  aria-invalid={Boolean(errors.message)}
                 />
+                <span className="field-error">{errors.message}</span>
               </div>
               <button type="submit" className="btn btn-primary form-btn">
                 {lang === 'kz' ? 'Жіберу' : 'Send'} →

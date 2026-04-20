@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { useApp } from '../context/AppContext';
+import { validateMessage, validateName, validateUrl } from '../lib/validation';
 
 const EMPTY_COURSE = {
   titleEn: '',
@@ -23,6 +24,7 @@ export default function AdminPage() {
   const [overview, setOverview] = useState(null);
 
   const [courseForm, setCourseForm] = useState(EMPTY_COURSE);
+  const [courseErrors, setCourseErrors] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -82,25 +84,40 @@ export default function AdminPage() {
 
   const submitCourse = async (event) => {
     event.preventDefault();
+    const nextErrors = {
+      titleEn: validateName(courseForm.titleEn, lang),
+      titleKz: validateName(courseForm.titleKz, lang),
+      descEn: validateMessage(courseForm.descEn, lang, 10),
+      descKz: validateMessage(courseForm.descKz, lang, 10),
+      img: validateUrl(courseForm.img, lang, 'image URL', 'сурет URL', true),
+      video: validateUrl(courseForm.video, lang, 'YouTube URL', 'YouTube URL', true),
+    };
+    setCourseErrors(nextErrors);
+
+    if (Object.values(nextErrors).some(Boolean)) {
+      showToast(lang === 'kz' ? 'Курс формасын тексеріңіз' : 'Please fix the course form', 'warning');
+      return;
+    }
 
     try {
       await api.addCourse({
         en: {
-          title: courseForm.titleEn,
-          desc: courseForm.descEn,
+          title: courseForm.titleEn.trim(),
+          desc: courseForm.descEn.trim(),
         },
         kz: {
-          title: courseForm.titleKz,
-          desc: courseForm.descKz,
+          title: courseForm.titleKz.trim(),
+          desc: courseForm.descKz.trim(),
         },
         category: courseForm.category,
         heroType: courseForm.heroType,
-        img: courseForm.img,
-        video: courseForm.video,
+        img: courseForm.img.trim(),
+        video: courseForm.video.trim(),
       });
 
       setModalOpen(false);
       setCourseForm(EMPTY_COURSE);
+      setCourseErrors({});
       showToast(lang === 'kz' ? 'Курс қосылды' : 'Course added', 'success');
       await loadAll();
     } catch (error) {
@@ -125,7 +142,13 @@ export default function AdminPage() {
             <a href="/api/export/analytics.json" className="btn btn-secondary btn-sm">
               🧾 {lang === 'kz' ? 'Analytics JSON' : 'Analytics JSON'}
             </a>
-            <button className="btn btn-primary btn-sm" onClick={() => setModalOpen(true)}>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setCourseErrors({});
+                setModalOpen(true);
+              }}
+            >
               + {lang === 'kz' ? 'Курс қосу' : 'Add Course'}
             </button>
           </div>
@@ -326,7 +349,14 @@ export default function AdminPage() {
       </section>
 
       {modalOpen && (
-        <div className="modal-overlay active" id="addModal" onClick={() => setModalOpen(false)}>
+        <div
+          className="modal-overlay active"
+          id="addModal"
+          onClick={() => {
+            setModalOpen(false);
+            setCourseErrors({});
+          }}
+        >
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>
               ADD <span>COURSE</span>
@@ -336,35 +366,57 @@ export default function AdminPage() {
                 <label>Title (EN)</label>
                 <input
                   type="text"
-                  required
                   value={courseForm.titleEn}
-                  onChange={(e) => setCourseForm((prev) => ({ ...prev, titleEn: e.target.value }))}
+                  onChange={(e) => {
+                    setCourseForm((prev) => ({ ...prev, titleEn: e.target.value }));
+                    setCourseErrors((prev) => ({ ...prev, titleEn: '' }));
+                  }}
+                  className={courseErrors.titleEn ? 'input-error' : courseForm.titleEn ? 'input-success' : ''}
+                  aria-invalid={Boolean(courseErrors.titleEn)}
                 />
+                <span className="field-error">{courseErrors.titleEn || ''}</span>
               </div>
               <div className="form-group">
                 <label>Title (KZ)</label>
                 <input
                   type="text"
-                  required
                   value={courseForm.titleKz}
-                  onChange={(e) => setCourseForm((prev) => ({ ...prev, titleKz: e.target.value }))}
+                  onChange={(e) => {
+                    setCourseForm((prev) => ({ ...prev, titleKz: e.target.value }));
+                    setCourseErrors((prev) => ({ ...prev, titleKz: '' }));
+                  }}
+                  className={courseErrors.titleKz ? 'input-error' : courseForm.titleKz ? 'input-success' : ''}
+                  aria-invalid={Boolean(courseErrors.titleKz)}
                 />
+                <span className="field-error">{courseErrors.titleKz || ''}</span>
               </div>
               <div className="form-group">
                 <label>Description (EN)</label>
                 <input
                   type="text"
                   value={courseForm.descEn}
-                  onChange={(e) => setCourseForm((prev) => ({ ...prev, descEn: e.target.value }))}
+                  onChange={(e) => {
+                    setCourseForm((prev) => ({ ...prev, descEn: e.target.value }));
+                    setCourseErrors((prev) => ({ ...prev, descEn: '' }));
+                  }}
+                  className={courseErrors.descEn ? 'input-error' : courseForm.descEn ? 'input-success' : ''}
+                  aria-invalid={Boolean(courseErrors.descEn)}
                 />
+                <span className="field-error">{courseErrors.descEn || ''}</span>
               </div>
               <div className="form-group">
                 <label>Description (KZ)</label>
                 <input
                   type="text"
                   value={courseForm.descKz}
-                  onChange={(e) => setCourseForm((prev) => ({ ...prev, descKz: e.target.value }))}
+                  onChange={(e) => {
+                    setCourseForm((prev) => ({ ...prev, descKz: e.target.value }));
+                    setCourseErrors((prev) => ({ ...prev, descKz: '' }));
+                  }}
+                  className={courseErrors.descKz ? 'input-error' : courseForm.descKz ? 'input-success' : ''}
+                  aria-invalid={Boolean(courseErrors.descKz)}
                 />
+                <span className="field-error">{courseErrors.descKz || ''}</span>
               </div>
               <div className="form-group">
                 <label>Category</label>
@@ -393,22 +445,42 @@ export default function AdminPage() {
                 <input
                   type="url"
                   value={courseForm.img}
-                  onChange={(e) => setCourseForm((prev) => ({ ...prev, img: e.target.value }))}
+                  onChange={(e) => {
+                    setCourseForm((prev) => ({ ...prev, img: e.target.value }));
+                    setCourseErrors((prev) => ({ ...prev, img: '' }));
+                  }}
+                  className={courseErrors.img ? 'input-error' : courseForm.img ? 'input-success' : ''}
+                  aria-invalid={Boolean(courseErrors.img)}
                 />
+                <span className="field-error">{courseErrors.img || ''}</span>
               </div>
               <div className="form-group">
                 <label>YouTube URL</label>
                 <input
                   type="url"
                   value={courseForm.video}
-                  onChange={(e) => setCourseForm((prev) => ({ ...prev, video: e.target.value }))}
+                  onChange={(e) => {
+                    setCourseForm((prev) => ({ ...prev, video: e.target.value }));
+                    setCourseErrors((prev) => ({ ...prev, video: '' }));
+                  }}
+                  className={courseErrors.video ? 'input-error' : courseForm.video ? 'input-success' : ''}
+                  aria-invalid={Boolean(courseErrors.video)}
                 />
+                <span className="field-error">{courseErrors.video || ''}</span>
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
                   {lang === 'kz' ? 'Қосу' : 'Add'}
                 </button>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setModalOpen(false)}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setModalOpen(false);
+                    setCourseErrors({});
+                  }}
+                >
                   {lang === 'kz' ? 'Бас тарту' : 'Cancel'}
                 </button>
               </div>
