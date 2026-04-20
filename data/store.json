@@ -1,0 +1,1733 @@
+{
+  "users": [],
+  "reviews": [],
+  "scores": [],
+  "courses": [
+    {
+      "id": 1,
+      "en": {
+        "title": "Introduction to JavaScript",
+        "desc": "Begin your hero journey — learn what JavaScript is and how it powers the web."
+      },
+      "kz": {
+        "title": "JavaScript-ке кіріспе",
+        "desc": "Батыр жолыңызды бастаңыз — JavaScript деген не және ол вебті қалай басқарады."
+      },
+      "category": "beginner",
+      "heroType": "tech",
+      "video": "https://www.youtube-nocookie.com/embed/W6NZfCO5SIk?rel=0",
+      "img": "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 2,
+      "en": {
+        "title": "Variables & Data Types",
+        "desc": "Master the building blocks: var, let, const and primitive types."
+      },
+      "kz": {
+        "title": "Айнымалылар мен деректер түрлері",
+        "desc": "Негізгі құрылымдарды меңгеріңіз: var, let, const және қарапайым түрлер."
+      },
+      "category": "beginner",
+      "heroType": "tech",
+      "video": "https://www.youtube-nocookie.com/embed/edlFjlzxkSI?rel=0",
+      "img": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 3,
+      "en": {
+        "title": "Operators & Expressions",
+        "desc": "Wield arithmetic, comparison and logical operators like a true hero."
+      },
+      "kz": {
+        "title": "Операторлар мен өрнектер",
+        "desc": "Арифметикалық, салыстыру және логикалық операторларды шебер қолданыңыз."
+      },
+      "category": "beginner",
+      "heroType": "tech",
+      "video": "https://www.youtube-nocookie.com/embed/FZzyij43A54?rel=0",
+      "img": "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 4,
+      "en": {
+        "title": "Control Flow: if / else / switch",
+        "desc": "Make decisions in your code — direct the flow like a strategist."
+      },
+      "kz": {
+        "title": "Басқару ағыны: if / else / switch",
+        "desc": "Кодта шешім қабылдаңыз — ағынды стратег сияқты басқарыңыз."
+      },
+      "category": "beginner",
+      "heroType": "tech",
+      "video": "https://www.youtube-nocookie.com/embed/IsG4Xd6LlsM?rel=0",
+      "img": "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 5,
+      "en": {
+        "title": "Loops: for, while, do-while",
+        "desc": "Repeat actions efficiently — loops are the backbone of automation."
+      },
+      "kz": {
+        "title": "Циклдар: for, while, do-while",
+        "desc": "Әрекеттерді тиімді қайталаңыз — циклдар автоматтандырудың негізі."
+      },
+      "category": "beginner",
+      "heroType": "tech",
+      "video": "https://www.youtube-nocookie.com/embed/Kn06785vJyg?rel=0",
+      "img": "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 6,
+      "en": {
+        "title": "Functions & Scope",
+        "desc": "Create reusable powers — functions are your super abilities."
+      },
+      "kz": {
+        "title": "Функциялар мен аумақ",
+        "desc": "Қайта пайдаланылатын күштер жасаңыз — функциялар сіздің суперқабілеттеріңіз."
+      },
+      "category": "beginner",
+      "heroType": "tech",
+      "video": "https://www.youtube-nocookie.com/embed/N8ap4k_1QEQ?rel=0",
+      "img": "https://i.ytimg.com/vi/t_fCi2spRz0/maxresdefault.jpg"
+    },
+    {
+      "id": 7,
+      "en": {
+        "title": "Arrays & Array Methods",
+        "desc": "Store collections of data and transform them with powerful methods."
+      },
+      "kz": {
+        "title": "Массивтер мен әдістері",
+        "desc": "Деректер жиынтығын сақтаңыз және оларды қуатты әдістермен түрлендіріңіз."
+      },
+      "category": "beginner",
+      "heroType": "tech",
+      "video": "https://www.youtube-nocookie.com/embed/oigfaZ5ApsM?rel=0",
+      "img": "https://images.unsplash.com/photo-1515879218367-8466d910auj7?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 8,
+      "en": {
+        "title": "Objects & JSON",
+        "desc": "Structure your data like a S.H.I.E.L.D. database with objects."
+      },
+      "kz": {
+        "title": "Объектілер мен JSON",
+        "desc": "S.H.I.E.L.D. деректер базасы сияқты деректеріңізді құрылымдаңыз."
+      },
+      "category": "intermediate",
+      "heroType": "magic",
+      "video": "https://www.youtube-nocookie.com/embed/PFmuCDHHpwk?rel=0",
+      "img": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 9,
+      "en": {
+        "title": "DOM Manipulation",
+        "desc": "Control the web page — select, modify and create elements at will."
+      },
+      "kz": {
+        "title": "DOM манипуляциясы",
+        "desc": "Веб-бетті басқарыңыз — элементтерді таңдаңыз, өзгертіңіз және жасаңыз."
+      },
+      "category": "intermediate",
+      "heroType": "magic",
+      "video": "https://www.youtube-nocookie.com/embed/y17RuWkWdn8?rel=0",
+      "img": "https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 10,
+      "en": {
+        "title": "Events & Event Handling",
+        "desc": "React to user actions — clicks, inputs and keyboard like Spider-sense."
+      },
+      "kz": {
+        "title": "Оқиғалар мен оқиға өңдеу",
+        "desc": "Пайдаланушы әрекеттеріне жауап беріңіз — клик, енгізу, пернетақта."
+      },
+      "category": "intermediate",
+      "heroType": "magic",
+      "video": "https://www.youtube-nocookie.com/embed/XF1_MlZ5l6M?rel=0",
+      "img": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 11,
+      "en": {
+        "title": "ES6 Arrow Functions",
+        "desc": "Write cleaner, shorter functions with the modern arrow syntax."
+      },
+      "kz": {
+        "title": "ES6 көрсеткі функциялары",
+        "desc": "Заманауи көрсеткі синтаксисімен таза, қысқа функциялар жазыңыз."
+      },
+      "category": "intermediate",
+      "heroType": "magic",
+      "video": "https://www.youtube-nocookie.com/embed/h33Srr5J9nY?rel=0",
+      "img": "https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 12,
+      "en": {
+        "title": "Destructuring & Spread",
+        "desc": "Unpack values from arrays and objects like opening a mystery box."
+      },
+      "kz": {
+        "title": "Деструктуризация мен Spread",
+        "desc": "Массивтер мен объектілерден мәндерді ашыңыз."
+      },
+      "category": "intermediate",
+      "heroType": "magic",
+      "video": "https://www.youtube-nocookie.com/embed/NIq3qLaHCIs?rel=0",
+      "img": "https://images.unsplash.com/photo-1550439062-609e1531270e?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 13,
+      "en": {
+        "title": "Promises",
+        "desc": "Handle asynchronous missions with Promises — never lose track."
+      },
+      "kz": {
+        "title": "Promises (уәделер)",
+        "desc": "Асинхронды миссияларды Promises арқылы басқарыңыз."
+      },
+      "category": "intermediate",
+      "heroType": "magic",
+      "video": "https://www.youtube-nocookie.com/embed/DHvZLI7Db8E?rel=0",
+      "img": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 14,
+      "en": {
+        "title": "Async / Await",
+        "desc": "Write asynchronous code that reads like a story — clean and powerful."
+      },
+      "kz": {
+        "title": "Async / Await",
+        "desc": "Асинхронды кодты оңай және қуатты жазыңыз."
+      },
+      "category": "advanced",
+      "heroType": "magic",
+      "video": "https://www.youtube-nocookie.com/embed/V_Kr9OSfDeU?rel=0",
+      "img": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 15,
+      "en": {
+        "title": "Fetch API & AJAX",
+        "desc": "Communicate with servers — send and receive data across the network."
+      },
+      "kz": {
+        "title": "Fetch API және AJAX",
+        "desc": "Серверлермен байланысыңыз — желі арқылы деректерді жіберіңіз және алыңыз."
+      },
+      "category": "advanced",
+      "heroType": "mutation",
+      "video": "https://www.youtube-nocookie.com/embed/cuEtnrL9-H0?rel=0",
+      "img": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 16,
+      "en": {
+        "title": "Local Storage & Session",
+        "desc": "Save data in the browser — persist hero progress between sessions."
+      },
+      "kz": {
+        "title": "Local Storage және Session",
+        "desc": "Деректерді браузерде сақтаңыз — сессиялар арасында прогресті сақтаңыз."
+      },
+      "category": "advanced",
+      "heroType": "mutation",
+      "video": "https://www.youtube-nocookie.com/embed/AUOzvFzdIk4?rel=0",
+      "img": "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 17,
+      "en": {
+        "title": "Error Handling & Debugging",
+        "desc": "Catch bugs like a detective — try/catch and debugging techniques."
+      },
+      "kz": {
+        "title": "Қателерді өңдеу мен жөндеу",
+        "desc": "Қателерді детектив сияқты табыңыз — try/catch және жөндеу техникалары."
+      },
+      "category": "advanced",
+      "heroType": "mutation",
+      "video": "https://www.youtube-nocookie.com/embed/cFTFtuEQ-10?rel=0",
+      "img": "https://images.unsplash.com/photo-1607799279861-4dd421887fc5?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 18,
+      "en": {
+        "title": "Classes & OOP",
+        "desc": "Build with blueprints — create classes and use object-oriented patterns."
+      },
+      "kz": {
+        "title": "Кластар мен ООП",
+        "desc": "Жоспарлармен құрыңыз — кластар жасаңыз және ОБП үлгілерін қолданыңыз."
+      },
+      "category": "advanced",
+      "heroType": "mutation",
+      "video": "https://www.youtube-nocookie.com/embed/2ZphE5HcQPQ?rel=0",
+      "img": "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 19,
+      "en": {
+        "title": "Modules: import / export",
+        "desc": "Organize your code into modules — teamwork makes the dream work."
+      },
+      "kz": {
+        "title": "Модульдер: import / export",
+        "desc": "Кодыңызды модульдерге бөліңіз — командалық жұмыс күшті."
+      },
+      "category": "advanced",
+      "heroType": "mutation",
+      "video": "https://www.youtube-nocookie.com/embed/cRHQNNcYf6s?rel=0",
+      "img": "https://images.unsplash.com/photo-1550439062-609e1531270e?w=400&h=250&fit=crop"
+    },
+    {
+      "id": 20,
+      "en": {
+        "title": "Node.js Introduction",
+        "desc": "Take JavaScript to the server side — become a full-stack hero."
+      },
+      "kz": {
+        "title": "Node.js кіріспе",
+        "desc": "JavaScript-ті сервер жағына апарыңыз — толық стек батыр болыңыз."
+      },
+      "category": "advanced",
+      "heroType": "mutation",
+      "video": "https://www.youtube-nocookie.com/embed/TlB_eWDSMt4?rel=0",
+      "img": "https://images.unsplash.com/photo-1619410283995-43d9134e7656?w=400&h=250&fit=crop"
+    }
+  ],
+  "quizzes": [
+    {
+      "courseId": 1,
+      "questions": [
+        {
+          "en": "What is JavaScript primarily used for?",
+          "kz": "JavaScript негізінен не үшін қолданылады?",
+          "options": [
+            "Styling web pages",
+            "Adding interactivity to websites",
+            "Database management",
+            "Operating system development"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where does JavaScript run?",
+          "kz": "JavaScript қайда жұмыс істейді?",
+          "options": [
+            "Only on servers",
+            "Only in browsers",
+            "In browsers and servers",
+            "Only in mobile apps"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "Which tag is used to include JavaScript in HTML?",
+          "kz": "HTML-де JavaScript қосу үшін қандай тег қолданылады?",
+          "options": [
+            "<js>",
+            "<javascript>",
+            "<script>",
+            "<code>"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "Who created JavaScript?",
+          "kz": "JavaScript-ті кім жасады?",
+          "options": [
+            "Tim Berners-Lee",
+            "Brendan Eich",
+            "James Gosling",
+            "Guido van Rossum"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 2,
+      "questions": [
+        {
+          "en": "Which keyword declares a block-scoped variable?",
+          "kz": "Блок аумағындағы айнымалыны қай кілт сөз жариялайды?",
+          "options": [
+            "var",
+            "let",
+            "both var and let",
+            "none"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What is the type of NaN?",
+          "kz": "NaN-ның түрі қандай?",
+          "options": [
+            "string",
+            "undefined",
+            "number",
+            "NaN"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "Which is NOT a primitive type?",
+          "kz": "Қайсысы қарапайым түр ЕМЕС?",
+          "options": [
+            "string",
+            "boolean",
+            "object",
+            "number"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "What does typeof null return?",
+          "kz": "typeof null не қайтарады?",
+          "options": [
+            "\"null\"",
+            "\"undefined\"",
+            "\"object\"",
+            "\"boolean\""
+          ],
+          "correct": 2
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 3,
+      "questions": [
+        {
+          "en": "What does === check?",
+          "kz": "=== не тексереді?",
+          "options": [
+            "Only value",
+            "Only type",
+            "Value and type",
+            "Neither"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "What is 5 + \"3\" in JavaScript?",
+          "kz": "JavaScript-те 5 + \"3\" нәтижесі қандай?",
+          "options": [
+            "8",
+            "53",
+            "\"53\"",
+            "Error"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "Which is the logical AND operator?",
+          "kz": "Логикалық ЖӘНЕ операторы қайсы?",
+          "options": [
+            "||",
+            "&&",
+            "!",
+            "??"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does ++ do?",
+          "kz": "++ не істейді?",
+          "options": [
+            "Decrements by 1",
+            "Increments by 1",
+            "Multiplies by 2",
+            "Divides by 2"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 4,
+      "questions": [
+        {
+          "en": "Which statement is used for multiple conditions?",
+          "kz": "Көптеген шарттар үшін қай оператор қолданылады?",
+          "options": [
+            "for",
+            "while",
+            "switch",
+            "do"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "What is the default case in switch?",
+          "kz": "Switch-те default case не?",
+          "options": [
+            "First case",
+            "Last case",
+            "Runs if no case matches",
+            "Required case"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "What does \"else if\" allow?",
+          "kz": "\"else if\" не мүмкіндік береді?",
+          "options": [
+            "Looping",
+            "Multiple conditions",
+            "Function calls",
+            "Variable declaration"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which value is falsy?",
+          "kz": "Қай мән falsy болады?",
+          "options": [
+            "1",
+            "\"hello\"",
+            "0",
+            "[]"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 5,
+      "questions": [
+        {
+          "en": "Which loop runs at least once?",
+          "kz": "Қай цикл кем дегенде бір рет орындалады?",
+          "options": [
+            "for",
+            "while",
+            "do-while",
+            "for...in"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "What does \"break\" do in a loop?",
+          "kz": "\"break\" циклде не істейді?",
+          "options": [
+            "Skips iteration",
+            "Exits the loop",
+            "Restarts loop",
+            "Pauses loop"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does \"continue\" do?",
+          "kz": "\"continue\" не істейді?",
+          "options": [
+            "Exits loop",
+            "Skips to next iteration",
+            "Stops program",
+            "Restarts loop"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "for(let i=0; i<3; i++) — how many times?",
+          "kz": "for(let i=0; i<3; i++) — неше рет?",
+          "options": [
+            "2",
+            "3",
+            "4",
+            "1"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 6,
+      "questions": [
+        {
+          "en": "What is a function?",
+          "kz": "Функция дегеніміз не?",
+          "options": [
+            "A variable",
+            "A reusable block of code",
+            "A loop",
+            "An HTML tag"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does \"return\" do?",
+          "kz": "\"return\" не істейді?",
+          "options": [
+            "Logs to console",
+            "Sends back a value",
+            "Declares variable",
+            "Creates loop"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What is a parameter?",
+          "kz": "Параметр деген не?",
+          "options": [
+            "Return value",
+            "Input variable in function definition",
+            "A global variable",
+            "A constant"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Can functions be stored in variables?",
+          "kz": "Функцияларды айнымалыларда сақтауға бола ма?",
+          "options": [
+            "No",
+            "Yes",
+            "Only arrow functions",
+            "Only named functions"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 7,
+      "questions": [
+        {
+          "en": "How to add an item to end of array?",
+          "kz": "Массив соңына элемент қалай қосасыз?",
+          "options": [
+            ".pop()",
+            ".push()",
+            ".shift()",
+            ".unshift()"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does .filter() return?",
+          "kz": ".filter() не қайтарады?",
+          "options": [
+            "One item",
+            "A new filtered array",
+            "A boolean",
+            "undefined"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does .map() do?",
+          "kz": ".map() не істейді?",
+          "options": [
+            "Filters array",
+            "Transforms each element",
+            "Sorts array",
+            "Removes elements"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "How to get array length?",
+          "kz": "Массив ұзындығын қалай аласыз?",
+          "options": [
+            ".size()",
+            ".length",
+            ".count()",
+            ".total()"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 8,
+      "questions": [
+        {
+          "en": "How to access object property?",
+          "kz": "Объект қасиетіне қалай қол жеткізесіз?",
+          "options": [
+            "obj->key",
+            "obj.key or obj[\"key\"]",
+            "obj::key",
+            "obj(key)"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What is JSON?",
+          "kz": "JSON дегеніміз не?",
+          "options": [
+            "A database",
+            "JavaScript Object Notation",
+            "A framework",
+            "A library"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which method converts JSON string to object?",
+          "kz": "JSON жолын объектіге қай әдіс түрлендіреді?",
+          "options": [
+            "JSON.stringify()",
+            "JSON.parse()",
+            "JSON.convert()",
+            "JSON.toObject()"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does Object.keys() return?",
+          "kz": "Object.keys() не қайтарады?",
+          "options": [
+            "Values array",
+            "Keys array",
+            "Boolean",
+            "Object copy"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 9,
+      "questions": [
+        {
+          "en": "What does DOM stand for?",
+          "kz": "DOM не білдіреді?",
+          "options": [
+            "Document Object Model",
+            "Data Object Manager",
+            "Document Oriented Model",
+            "Dynamic Object Model"
+          ],
+          "correct": 0
+        },
+        {
+          "en": "How to select element by ID?",
+          "kz": "ID бойынша элементті қалай таңдайсыз?",
+          "options": [
+            "querySelector()",
+            "getElementById()",
+            "getElementByClass()",
+            "findById()"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does innerHTML do?",
+          "kz": "innerHTML не істейді?",
+          "options": [
+            "Gets/sets CSS",
+            "Gets/sets HTML content",
+            "Gets/sets attributes",
+            "Removes element"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "How to create a new element?",
+          "kz": "Жаңа элемент қалай жасалады?",
+          "options": [
+            "document.createElement()",
+            "document.newElement()",
+            "document.make()",
+            "document.build()"
+          ],
+          "correct": 0
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 10,
+      "questions": [
+        {
+          "en": "What method adds an event listener?",
+          "kz": "Оқиға тыңдаушысын қай әдіс қосады?",
+          "options": [
+            ".onEvent()",
+            ".addEventListener()",
+            ".listenTo()",
+            ".attachEvent()"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which event fires on click?",
+          "kz": "Клик кезінде қай оқиға іске қосылады?",
+          "options": [
+            "onhover",
+            "click",
+            "press",
+            "activate"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What is event.preventDefault()?",
+          "kz": "event.preventDefault() не?",
+          "options": [
+            "Stops propagation",
+            "Prevents default browser action",
+            "Removes event",
+            "Creates event"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What is event bubbling?",
+          "kz": "Event bubbling дегеніміз не?",
+          "options": [
+            "Events go from parent to child",
+            "Events go from child to parent",
+            "Events are cancelled",
+            "Events are delayed"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 11,
+      "questions": [
+        {
+          "en": "Correct arrow function syntax?",
+          "kz": "Дұрыс көрсеткі функция синтаксисі?",
+          "options": [
+            "=> function()",
+            "() => {}",
+            "function =>()",
+            "-> () {}"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Do arrow functions have their own \"this\"?",
+          "kz": "Көрсеткі функцияларда өз \"this\" бар ма?",
+          "options": [
+            "Yes",
+            "No",
+            "Sometimes",
+            "Only in strict mode"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Can arrow functions be used as constructors?",
+          "kz": "Көрсеткі функцияларды конструктор ретінде қолдануға бола ма?",
+          "options": [
+            "Yes",
+            "No",
+            "Only with new keyword",
+            "Only in classes"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Shortest arrow function form?",
+          "kz": "Ең қысқа көрсеткі функция формасы?",
+          "options": [
+            "x => x * 2",
+            "(x) => { return x * 2 }",
+            "function(x) { return x*2 }",
+            "x -> x * 2"
+          ],
+          "correct": 0
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 12,
+      "questions": [
+        {
+          "en": "What does destructuring do?",
+          "kz": "Деструктуризация не істейді?",
+          "options": [
+            "Destroys variables",
+            "Unpacks values from arrays/objects",
+            "Creates arrays",
+            "Merges objects"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does the spread operator look like?",
+          "kz": "Spread оператор қалай көрінеді?",
+          "options": [
+            "**",
+            "...",
+            "::",
+            ">>"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "const [a, b] = [1, 2]; What is b?",
+          "kz": "const [a, b] = [1, 2]; b неге тең?",
+          "options": [
+            "1",
+            "2",
+            "undefined",
+            "[1,2]"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does ...rest do in function params?",
+          "kz": "Функция параметрлеріндегі ...rest не істейді?",
+          "options": [
+            "Spreads array",
+            "Collects remaining arguments",
+            "Creates object",
+            "Destroys array"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 13,
+      "questions": [
+        {
+          "en": "What states can a Promise have?",
+          "kz": "Promise қандай күйлерде болады?",
+          "options": [
+            "start, end",
+            "pending, fulfilled, rejected",
+            "open, closed",
+            "active, inactive"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which method handles fulfilled promise?",
+          "kz": "Орындалған promise-ті қай әдіс өңдейді?",
+          "options": [
+            ".catch()",
+            ".then()",
+            ".finally()",
+            ".done()"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which method handles rejected promise?",
+          "kz": "Қабылданбаған promise-ті қай әдіс өңдейді?",
+          "options": [
+            ".then()",
+            ".catch()",
+            ".reject()",
+            ".error()"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does Promise.all() do?",
+          "kz": "Promise.all() не істейді?",
+          "options": [
+            "Runs one promise",
+            "Waits for all promises",
+            "Cancels promises",
+            "Creates promise"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 14,
+      "questions": [
+        {
+          "en": "What does \"async\" keyword do?",
+          "kz": "\"async\" кілт сөзі не істейді?",
+          "options": [
+            "Makes function synchronous",
+            "Makes function return a Promise",
+            "Stops execution",
+            "Creates loop"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does \"await\" do?",
+          "kz": "\"await\" не істейді?",
+          "options": [
+            "Skips promise",
+            "Pauses until promise resolves",
+            "Creates promise",
+            "Rejects promise"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Can you use await outside async function?",
+          "kz": "Await-ті async функциядан тыс қолдануға бола ма?",
+          "options": [
+            "Yes always",
+            "No (except top-level in modules)",
+            "Yes in any function",
+            "Only in loops"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "How to handle errors with async/await?",
+          "kz": "Async/await-пен қателерді қалай өңдейміз?",
+          "options": [
+            "if/else",
+            ".catch()",
+            "try/catch",
+            "switch/case"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 15,
+      "questions": [
+        {
+          "en": "What does fetch() return?",
+          "kz": "fetch() не қайтарады?",
+          "options": [
+            "Data directly",
+            "A Promise",
+            "An array",
+            "A string"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What method converts response to JSON?",
+          "kz": "Жауапты JSON-ға қай әдіс түрлендіреді?",
+          "options": [
+            ".json()",
+            ".toJSON()",
+            ".parse()",
+            ".convert()"
+          ],
+          "correct": 0
+        },
+        {
+          "en": "What HTTP method is used to send data?",
+          "kz": "Деректерді жіберу үшін қай HTTP әдіс қолданылады?",
+          "options": [
+            "GET",
+            "POST",
+            "DELETE",
+            "FETCH"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What is AJAX?",
+          "kz": "AJAX дегеніміз не?",
+          "options": [
+            "A framework",
+            "Asynchronous JS and XML",
+            "A database",
+            "A server"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 16,
+      "questions": [
+        {
+          "en": "What does localStorage persist?",
+          "kz": "localStorage не сақтайды?",
+          "options": [
+            "Until tab closes",
+            "Until browser closes",
+            "Until manually cleared",
+            "For 24 hours"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "How to save data to localStorage?",
+          "kz": "localStorage-ға деректерді қалай сақтайсыз?",
+          "options": [
+            "localStorage.save()",
+            "localStorage.setItem()",
+            "localStorage.put()",
+            "localStorage.add()"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What type does localStorage store?",
+          "kz": "localStorage қандай түрді сақтайды?",
+          "options": [
+            "Objects",
+            "Arrays",
+            "Strings only",
+            "Any type"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "How to remove one item?",
+          "kz": "Бір элементті қалай жоясыз?",
+          "options": [
+            "localStorage.delete()",
+            "localStorage.removeItem()",
+            "localStorage.clear()",
+            "localStorage.pop()"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 17,
+      "questions": [
+        {
+          "en": "What does try/catch do?",
+          "kz": "try/catch не істейді?",
+          "options": [
+            "Creates errors",
+            "Handles runtime errors",
+            "Loops code",
+            "Defines variables"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What keyword throws an error manually?",
+          "kz": "Қателікті қолмен қай кілт сөз шығарады?",
+          "options": [
+            "error",
+            "throw",
+            "catch",
+            "break"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What is \"finally\" block for?",
+          "kz": "\"finally\" блогы не үшін?",
+          "options": [
+            "Only runs on error",
+            "Runs regardless of error",
+            "Replaces catch",
+            "Stops program"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which tool helps debug in browser?",
+          "kz": "Браузерде жөндеуге қай құрал көмектеседі?",
+          "options": [
+            "Terminal",
+            "DevTools Console",
+            "Text editor",
+            "File manager"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 18,
+      "questions": [
+        {
+          "en": "What keyword creates a class?",
+          "kz": "Класс жасау үшін қай кілт сөз қолданылады?",
+          "options": [
+            "function",
+            "object",
+            "class",
+            "struct"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "What is the constructor method?",
+          "kz": "constructor әдісі не?",
+          "options": [
+            "Destroys object",
+            "Initializes object",
+            "Copies object",
+            "Validates object"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does \"extends\" do?",
+          "kz": "\"extends\" не істейді?",
+          "options": [
+            "Creates new class",
+            "Inherits from another class",
+            "Deletes class",
+            "Exports class"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does \"super\" keyword do?",
+          "kz": "\"super\" кілт сөзі не істейді?",
+          "options": [
+            "Creates new object",
+            "Calls parent constructor",
+            "Deletes parent",
+            "Exports parent"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 19,
+      "questions": [
+        {
+          "en": "What does \"export default\" do?",
+          "kz": "\"export default\" не істейді?",
+          "options": [
+            "Imports module",
+            "Exports one main thing",
+            "Deletes module",
+            "Creates variable"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "How to import a named export?",
+          "kz": "Аталған экспортты қалай импорттайсыз?",
+          "options": [
+            "import x from",
+            "import { x } from",
+            "require(x)",
+            "include(x)"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What file extension is needed for ES modules in Node?",
+          "kz": "Node-да ES модульдері үшін қандай файл кеңейтімі керек?",
+          "options": [
+            ".js",
+            ".mjs",
+            ".mod",
+            ".es"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Can you have multiple named exports?",
+          "kz": "Бірнеше аталған экспорт бола ма?",
+          "options": [
+            "No",
+            "Yes",
+            "Only 2",
+            "Only in React"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    },
+    {
+      "courseId": 20,
+      "questions": [
+        {
+          "en": "What is Node.js?",
+          "kz": "Node.js дегеніміз не?",
+          "options": [
+            "A browser",
+            "A JS runtime on server",
+            "A database",
+            "A CSS framework"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which module handles HTTP in Node.js?",
+          "kz": "Node.js-те HTTP-ні қай модуль өңдейді?",
+          "options": [
+            "fs",
+            "path",
+            "http",
+            "url"
+          ],
+          "correct": 2
+        },
+        {
+          "en": "What is npm?",
+          "kz": "npm дегеніміз не?",
+          "options": [
+            "A browser",
+            "Node Package Manager",
+            "A compiler",
+            "A database"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "What does require() do?",
+          "kz": "require() не істейді?",
+          "options": [
+            "Creates file",
+            "Imports a module",
+            "Deletes module",
+            "Runs test"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Which habit improves JavaScript learning the fastest?",
+          "kz": "JavaScript-ті тез меңгеруге қай әдет ең пайдалы?",
+          "options": [
+            "Ignoring errors",
+            "Daily coding practice",
+            "Watching only theory",
+            "Skipping exercises"
+          ],
+          "correct": 1
+        },
+        {
+          "en": "Where can you track your quiz progress in this platform?",
+          "kz": "Осы платформада тест прогресін қайдан көре аласыз?",
+          "options": [
+            "Only in browser history",
+            "Only in Telegram",
+            "In saved score history",
+            "It is not saved"
+          ],
+          "correct": 2
+        }
+      ]
+    }
+  ],
+  "telemetry": {
+    "telegramClicks": 2
+  },
+  "updatedAt": "2026-04-20T05:19:54.795Z"
+}

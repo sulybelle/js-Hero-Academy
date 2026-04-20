@@ -1,16 +1,27 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const ExcelJS = require('exceljs');
 
 const app = express();
 const PORT = 3003;
+const DATA_DIR = path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'store.json');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const DIST_DIR = path.join(__dirname, 'dist');
+const DIST_INDEX = path.join(DIST_DIR, 'index.html');
+const VITE_INDEX = path.join(__dirname, 'index.html');
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(PUBLIC_DIR));
+if (fs.existsSync(DIST_DIR)) {
+  app.use(express.static(DIST_DIR));
+}
  
 let users = [];
 let reviews = [];
 let scores = [];
+let telemetry = { telegramClicks: 0 };
 
 const courses = [
   { id:1, en:{title:'Introduction to JavaScript',desc:'Begin your hero journey — learn what JavaScript is and how it powers the web.'},kz:{title:'JavaScript-ке кіріспе',desc:'Батыр жолыңызды бастаңыз — JavaScript деген не және ол вебті қалай басқарады.'},category:'beginner',heroType:'tech',video:'https://www.youtube.com/embed/W6NZfCO5SIk',img:'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop'},
@@ -157,127 +168,514 @@ const quizzes = [
     {en:'What does require() do?',kz:'require() не істейді?',options:['Creates file','Imports a module','Deletes module','Runs test'],correct:1}
   ]}
 ];
+
+function normalizeYouTubeEmbed(url) {
+  if (!url) return '';
+  const raw = String(url).trim();
+
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.replace('www.', '');
+    let videoId = '';
+
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      if (parsed.pathname.startsWith('/embed/')) {
+        videoId = parsed.pathname.split('/embed/')[1]?.split('/')[0] || '';
+      } else if (parsed.pathname === '/watch') {
+        videoId = parsed.searchParams.get('v') || '';
+      } else if (parsed.pathname.startsWith('/shorts/')) {
+        videoId = parsed.pathname.split('/shorts/')[1]?.split('/')[0] || '';
+      }
+    } else if (host === 'youtu.be') {
+      videoId = parsed.pathname.replace('/', '').split('/')[0];
+    }
+
+    if (videoId) {
+      return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`;
+    }
+  } catch {
+    return raw;
+  }
+
+  return raw;
+}
+
+function sanitizeCourse(raw, idx = 0) {
+  const id = Number(raw.id) || Date.now() + idx;
+  const fallbackImg = 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop';
+  return {
+    id,
+    en: {
+      title: raw?.en?.title || `Course ${id}`,
+      desc: raw?.en?.desc || 'JavaScript learning module.',
+    },
+    kz: {
+      title: raw?.kz?.title || `Курс ${id}`,
+      desc: raw?.kz?.desc || 'JavaScript оқу модулі.',
+    },
+    category: raw.category || 'beginner',
+    heroType: raw.heroType || 'tech',
+    video: normalizeYouTubeEmbed(raw.video),
+    img: raw.img || fallbackImg,
+  };
+}
+
+const BONUS_QUESTIONS = [
+  {
+    en: 'Which habit improves JavaScript learning the fastest?',
+    kz: 'JavaScript-ті тез меңгеруге қай әдет ең пайдалы?',
+    options: ['Ignoring errors', 'Daily coding practice', 'Watching only theory', 'Skipping exercises'],
+    correct: 1,
+  },
+  {
+    en: 'Where can you track your quiz progress in this platform?',
+    kz: 'Осы платформада тест прогресін қайдан көре аласыз?',
+    options: ['Only in browser history', 'Only in Telegram', 'In saved score history', 'It is not saved'],
+    correct: 2,
+  },
+];
+
+function ensureBonusQuestions() {
+  quizzes.forEach((quiz) => {
+    BONUS_QUESTIONS.forEach((question) => {
+      const exists = quiz.questions.some((q) => q.en === question.en);
+      if (!exists) {
+        quiz.questions.push({ ...question });
+      }
+    });
+  });
+}
+
+function replaceArray(target, source, mapper = (item) => item) {
+  target.splice(0, target.length, ...source.map(mapper));
+}
+
+function persistData() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+
+    const payload = {
+      users,
+      reviews,
+      scores,
+      courses,
+      quizzes,
+      telemetry,
+      updatedAt: new Date().toISOString(),
+    };
+
+    fs.writeFileSync(DATA_FILE, JSON.stringify(payload, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Persist error:', error.message);
+  }
+}
+
+function loadPersistedData() {
+  if (!fs.existsSync(DATA_FILE)) return;
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+
+    if (Array.isArray(parsed.users)) {
+      users = parsed.users;
+    }
+    if (Array.isArray(parsed.reviews)) {
+      reviews = parsed.reviews;
+    }
+    if (Array.isArray(parsed.scores)) {
+      scores = parsed.scores;
+    }
+    if (Array.isArray(parsed.courses) && parsed.courses.length) {
+      replaceArray(courses, parsed.courses, sanitizeCourse);
+    }
+    if (Array.isArray(parsed.quizzes) && parsed.quizzes.length) {
+      replaceArray(quizzes, parsed.quizzes);
+    }
+    if (parsed.telemetry && typeof parsed.telemetry === 'object') {
+      telemetry = { ...telemetry, ...parsed.telemetry };
+    }
+  } catch (error) {
+    console.error('Load persisted data error:', error.message);
+  }
+}
+
+function buildAdminOverview() {
+  const enrollmentCount = users.reduce((acc, user) => acc + (user.enrolledCourses?.length || 0), 0);
+  const avgScore = scores.length
+    ? Math.round(scores.reduce((sum, entry) => sum + entry.percentage, 0) / scores.length)
+    : 0;
+
+  const topCoursesMap = {};
+  users.forEach((user) => {
+    (user.enrolledCourses || []).forEach((courseId) => {
+      topCoursesMap[courseId] = (topCoursesMap[courseId] || 0) + 1;
+    });
+  });
+
+  const topCourses = Object.entries(topCoursesMap)
+    .map(([courseId, enrolled]) => {
+      const course = courses.find((c) => c.id === Number(courseId));
+      return {
+        courseId: Number(courseId),
+        title: course ? course.en.title : `Course ${courseId}`,
+        enrolled,
+      };
+    })
+    .sort((a, b) => b.enrolled - a.enrolled)
+    .slice(0, 5);
+
+  const scorerMap = {};
+  scores.forEach((entry) => {
+    const key = entry.userName || 'Guest';
+    if (!scorerMap[key]) {
+      scorerMap[key] = { userName: key, attempts: 0, totalPercent: 0 };
+    }
+    scorerMap[key].attempts += 1;
+    scorerMap[key].totalPercent += entry.percentage;
+  });
+
+  const topScorers = Object.values(scorerMap)
+    .map((item) => ({
+      userName: item.userName,
+      attempts: item.attempts,
+      avgPercentage: Math.round(item.totalPercent / item.attempts),
+    }))
+    .sort((a, b) => b.avgPercentage - a.avgPercentage)
+    .slice(0, 10);
+
+  return {
+    stats: {
+      users: users.length,
+      courses: courses.length,
+      scores: scores.length,
+      reviews: reviews.length,
+      enrollments: enrollmentCount,
+      avgScore,
+      telegramClicks: telemetry.telegramClicks || 0,
+    },
+    topCourses,
+    topScorers,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+replaceArray(courses, courses, sanitizeCourse);
+loadPersistedData();
+replaceArray(courses, courses, sanitizeCourse);
+ensureBonusQuestions();
+persistData();
  
-app.get('/api/users', (req, res) => res.json(users));
+function sanitizeUserResponse(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    enrolledCourses: user.enrolledCourses || [],
+    registeredAt: user.registeredAt || user.createdAt || new Date().toISOString(),
+  };
+}
+
+app.get('/api/users', (req, res) => res.json(users.map(sanitizeUserResponse)));
 
 app.post('/api/register', (req, res) => {
   const { name, phone, email, password } = req.body;
-  if (!name || !phone || !email || !password) return res.status(400).json({ error: 'All fields required' });
-  if (users.find(u => u.email === email)) return res.status(400).json({ error: 'Email already registered' });
-  const user = { id: Date.now(), name, phone, email, password, enrolledCourses: [], registeredAt: new Date().toISOString() };
+  if (!name || !phone || !email || !password) {
+    return res.status(400).json({ error: 'All fields required' });
+  }
+
+  const normalizedEmail = String(email).toLowerCase().trim();
+  if (users.find((u) => String(u.email).toLowerCase() === normalizedEmail)) {
+    return res.status(400).json({ error: 'Email already registered' });
+  }
+
+  const user = {
+    id: Date.now(),
+    name,
+    phone,
+    email: normalizedEmail,
+    password,
+    enrolledCourses: [],
+    registeredAt: new Date().toISOString(),
+  };
   users.push(user);
+  persistData();
+
   res.json({ success: true, user: { id: user.id, name: user.name, email: user.email } });
 });
 
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
-  const user = users.find(u => u.email === email && u.password === password);
+  const normalizedEmail = String(email || '').toLowerCase().trim();
+  const user = users.find((u) => String(u.email).toLowerCase() === normalizedEmail && u.password === password);
   if (!user) return res.status(401).json({ error: 'Invalid credentials' });
   res.json({ success: true, user: { id: user.id, name: user.name, email: user.email } });
 });
 
 app.delete('/api/users/:id', (req, res) => {
-  users = users.filter(u => u.id !== parseInt(req.params.id));
+  const id = Number(req.params.id);
+  users = users.filter((u) => u.id !== id);
+  scores = scores.filter((s) => s.userId !== id);
+  persistData();
   res.json({ success: true });
 });
- 
-app.get('/api/courses', (req, res) => res.json(courses));
+
+app.get('/api/courses', (req, res) => res.json(courses.map(sanitizeCourse)));
 
 app.post('/api/courses', (req, res) => {
-  const c = { id: Date.now(), ...req.body, img: req.body.img || 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop' };
-  courses.push(c);
-  res.json({ success: true, course: c });
+  const course = sanitizeCourse({ id: Date.now(), ...req.body });
+  courses.push(course);
+
+  const quizExists = quizzes.some((q) => q.courseId === course.id);
+  if (!quizExists) {
+    quizzes.push({
+      courseId: course.id,
+      questions: [...BONUS_QUESTIONS.map((q) => ({ ...q }))],
+    });
+  }
+
+  persistData();
+  res.json({ success: true, course });
 });
 
 app.delete('/api/courses/:id', (req, res) => {
-  const idx = courses.findIndex(c => c.id === parseInt(req.params.id));
-  if (idx > -1) courses.splice(idx, 1);
+  const id = Number(req.params.id);
+  const idx = courses.findIndex((c) => c.id === id);
+  if (idx > -1) {
+    courses.splice(idx, 1);
+    const qIdx = quizzes.findIndex((q) => q.courseId === id);
+    if (qIdx > -1) quizzes.splice(qIdx, 1);
+    reviews = reviews.filter((r) => r.courseId !== id);
+    scores = scores.filter((s) => s.courseId !== id);
+    users = users.map((user) => ({
+      ...user,
+      enrolledCourses: (user.enrolledCourses || []).filter((courseId) => courseId !== id),
+    }));
+    persistData();
+  }
   res.json({ success: true });
 });
 
 app.post('/api/enroll', (req, res) => {
   const { userId, courseId } = req.body;
-  const user = users.find(u => u.id === userId);
+  const user = users.find((u) => u.id === Number(userId));
   if (!user) return res.status(404).json({ error: 'User not found' });
-  if (!user.enrolledCourses.includes(courseId)) user.enrolledCourses.push(courseId);
+
+  const course = courses.find((c) => c.id === Number(courseId));
+  if (!course) return res.status(404).json({ error: 'Course not found' });
+
+  if (!Array.isArray(user.enrolledCourses)) {
+    user.enrolledCourses = [];
+  }
+
+  if (!user.enrolledCourses.includes(course.id)) {
+    user.enrolledCourses.push(course.id);
+    persistData();
+  }
+
   res.json({ success: true });
 });
- 
+
 app.get('/api/reviews', (req, res) => {
-  const courseId = req.query.courseId ? parseInt(req.query.courseId) : null;
-  const filtered = courseId ? reviews.filter(r => r.courseId === courseId) : reviews;
-  res.json(filtered);
+  const courseId = req.query.courseId ? Number(req.query.courseId) : null;
+  const filtered = courseId ? reviews.filter((r) => r.courseId === courseId) : reviews;
+  res.json(filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)));
 });
 
 app.post('/api/reviews', (req, res) => {
   const { courseId, userName, text, rating } = req.body;
   if (!text || !userName) return res.status(400).json({ error: 'Text and name required' });
-  const review = { id: Date.now(), courseId: courseId || null, userName, text, rating: rating || 5, createdAt: new Date().toISOString() };
+
+  const review = {
+    id: Date.now(),
+    courseId: courseId || null,
+    userName,
+    text,
+    rating: rating || 5,
+    createdAt: new Date().toISOString(),
+  };
+
   reviews.push(review);
+  persistData();
   res.json({ success: true, review });
 });
- 
+
 app.get('/api/quizzes', (req, res) => res.json(quizzes));
 
 app.get('/api/quizzes/:courseId', (req, res) => {
-  const quiz = quizzes.find(q => q.courseId === parseInt(req.params.courseId));
+  const quiz = quizzes.find((q) => q.courseId === Number(req.params.courseId));
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
   res.json(quiz);
 });
- 
+
 app.get('/api/scores', (req, res) => {
-  const userId = req.query.userId ? parseInt(req.query.userId) : null;
-  const filtered = userId ? scores.filter(s => s.userId === userId) : scores;
+  const userId = req.query.userId ? Number(req.query.userId) : null;
+  const filtered = userId ? scores.filter((s) => s.userId === userId) : scores;
   res.json(filtered);
 });
 
 app.post('/api/scores', (req, res) => {
   const { userId, userName, courseId, score, total } = req.body;
-  const existing = scores.findIndex(s => s.userId === userId && s.courseId === courseId);
-  const entry = { userId, userName, courseId, score, total, percentage: Math.round((score / total) * 100), date: new Date().toISOString() };
+  const existing = scores.findIndex((s) => s.userId === userId && s.courseId === courseId);
+
+  const entry = {
+    userId,
+    userName,
+    courseId,
+    score,
+    total,
+    percentage: Math.round((score / total) * 100),
+    date: new Date().toISOString(),
+  };
+
   if (existing > -1) scores[existing] = entry;
   else scores.push(entry);
+
+  persistData();
   res.json({ success: true, entry });
 });
- 
+
+app.post('/api/telemetry/telegram-click', (req, res) => {
+  telemetry.telegramClicks = Number(telemetry.telegramClicks || 0) + 1;
+  persistData();
+  res.json({ success: true, telegramClicks: telemetry.telegramClicks });
+});
+
+app.get('/api/admin/overview', (req, res) => {
+  res.json(buildAdminOverview());
+});
+
 app.get('/api/export/users', async (req, res) => {
   try {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Users');
 
     sheet.columns = [
-      { header: 'Аты', key: 'name', width: 25 },
-      { header: 'Телефон', key: 'phone', width: 18 },
+      { header: 'ID', key: 'id', width: 16 },
+      { header: 'Name', key: 'name', width: 25 },
+      { header: 'Phone', key: 'phone', width: 20 },
       { header: 'Email', key: 'email', width: 30 },
-      { header: 'Тіркелген күні', key: 'registeredAt', width: 25 }
+      { header: 'Registered', key: 'registeredAt', width: 28 },
+      { header: 'Enrolled Count', key: 'enrolled', width: 16 },
+      { header: 'Enrolled IDs', key: 'enrolledIds', width: 30 },
     ];
 
-    users.forEach(u => {
+    users.forEach((u) => {
       sheet.addRow({
+        id: u.id,
         name: u.name,
         phone: u.phone,
         email: u.email,
-        registeredAt: u.registeredAt
+        registeredAt: u.registeredAt || u.createdAt,
+        enrolled: (u.enrolledCourses || []).length,
+        enrolledIds: (u.enrolledCourses || []).join(', '),
       });
     });
 
     res.setHeader('Content-Disposition', 'attachment; filename=users.xlsx');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
-    console.error('Excel жасау кезінде қате шықты:', error);
-    res.status(500).json({ error: 'Excel файлын жасау мүмкін болмады' });
+    console.error('Export users error:', error);
+    res.status(500).json({ error: 'Failed to export users' });
   }
 });
- 
-const pages = ['index','courses','register','login','admin','contact','course-detail','quiz'];
-pages.forEach(p => {
-  const route = p === 'index' ? '/' : `/${p}`;
-  app.get(route, (req, res) => res.sendFile(path.join(__dirname, 'public', `${p}.html`)));
+
+app.get('/api/export/full-report', async (req, res) => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+
+    const usersSheet = workbook.addWorksheet('Users');
+    usersSheet.columns = [
+      { header: 'ID', key: 'id', width: 16 },
+      { header: 'Name', key: 'name', width: 25 },
+      { header: 'Phone', key: 'phone', width: 20 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Registered', key: 'registeredAt', width: 28 },
+      { header: 'Enrolled IDs', key: 'enrolledCourses', width: 30 },
+    ];
+    users.forEach((u) => usersSheet.addRow({ ...u, enrolledCourses: (u.enrolledCourses || []).join(', ') }));
+
+    const coursesSheet = workbook.addWorksheet('Courses');
+    coursesSheet.columns = [
+      { header: 'ID', key: 'id', width: 14 },
+      { header: 'Title EN', key: 'titleEn', width: 35 },
+      { header: 'Title KZ', key: 'titleKz', width: 35 },
+      { header: 'Category', key: 'category', width: 16 },
+      { header: 'Hero Type', key: 'heroType', width: 16 },
+      { header: 'Video', key: 'video', width: 50 },
+    ];
+    courses.forEach((c) =>
+      coursesSheet.addRow({
+        id: c.id,
+        titleEn: c.en.title,
+        titleKz: c.kz.title,
+        category: c.category,
+        heroType: c.heroType,
+        video: c.video,
+      }),
+    );
+
+    const scoresSheet = workbook.addWorksheet('Scores');
+    scoresSheet.columns = [
+      { header: 'User ID', key: 'userId', width: 14 },
+      { header: 'User', key: 'userName', width: 24 },
+      { header: 'Course ID', key: 'courseId', width: 14 },
+      { header: 'Score', key: 'score', width: 10 },
+      { header: 'Total', key: 'total', width: 10 },
+      { header: 'Percentage', key: 'percentage', width: 12 },
+      { header: 'Date', key: 'date', width: 28 },
+    ];
+    scores.forEach((s) => scoresSheet.addRow(s));
+
+    const reviewsSheet = workbook.addWorksheet('Reviews');
+    reviewsSheet.columns = [
+      { header: 'ID', key: 'id', width: 16 },
+      { header: 'Course ID', key: 'courseId', width: 14 },
+      { header: 'User', key: 'userName', width: 24 },
+      { header: 'Rating', key: 'rating', width: 10 },
+      { header: 'Text', key: 'text', width: 60 },
+      { header: 'Created At', key: 'createdAt', width: 28 },
+    ];
+    reviews.forEach((r) => reviewsSheet.addRow(r));
+
+    const analyticsSheet = workbook.addWorksheet('Analytics');
+    const overview = buildAdminOverview();
+    analyticsSheet.columns = [
+      { header: 'Metric', key: 'metric', width: 25 },
+      { header: 'Value', key: 'value', width: 20 },
+    ];
+    Object.entries(overview.stats).forEach(([metric, value]) => {
+      analyticsSheet.addRow({ metric, value });
+    });
+
+    res.setHeader('Content-Disposition', 'attachment; filename=jsha-full-report.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Export full report error:', error);
+    res.status(500).json({ error: 'Failed to export full report' });
+  }
 });
-app.get('/course/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'course-detail.html')));
+
+app.get('/api/export/analytics.json', (req, res) => {
+  res.json(buildAdminOverview());
+});
+
+function serveApp(req, res) {
+  if (fs.existsSync(DIST_INDEX)) {
+    return res.sendFile(DIST_INDEX);
+  }
+  return res.sendFile(VITE_INDEX);
+}
+
+const spaRoutes = ['/', '/courses', '/register', '/login', '/admin', '/contact', '/quiz'];
+spaRoutes.forEach((route) => app.get(route, serveApp));
+app.get('/course/:id', serveApp);
 
 app.listen(PORT, () => {
   console.log(`JS Heroes Academy running at http://localhost:${PORT}`);
@@ -285,7 +683,7 @@ app.listen(PORT, () => {
   try {
     const bot = require('./bot.js');
     bot.startBot();
-  } catch (e) {
-    console.log('Telegram bot could not start:', e.message);
+  } catch (error) {
+    console.log('Telegram bot could not start:', error.message);
   }
 });

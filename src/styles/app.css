@@ -1,0 +1,179 @@
+:root {
+  --bg-main: #0e1422;
+  --bg-card: #19233a;
+  --bg-soft: #10192d;
+  --text-main: #e7eeff;
+  --text-muted: #9aabce;
+  --accent: #f6c655;
+  --accent-strong: #ffb100;
+  --border: #2a3b63;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at top right, #1c2f58, var(--bg-main) 40%);
+  color: var(--text-main);
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(16, 25, 45, 0.9);
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(8px);
+}
+
+.logo {
+  letter-spacing: 1px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.pill {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.main-content {
+  width: min(1100px, 92%);
+  margin: 24px auto;
+  flex: 1;
+}
+
+.hero h1 {
+  margin: 0 0 8px;
+  font-size: clamp(28px, 5vw, 44px);
+}
+
+.hero p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.search-box {
+  margin: 22px 0;
+}
+
+.search-box input,
+.enroll-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text-main);
+  outline: none;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(25, 35, 58, 0.95), rgba(16, 25, 45, 0.95));
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.card-level {
+  display: inline-block;
+  border: 1px solid rgba(246, 198, 85, 0.4);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.card h3 {
+  margin: 12px 0 8px;
+}
+
+.card p {
+  margin: 0 0 14px;
+  color: var(--text-muted);
+  min-height: 52px;
+}
+
+.btn {
+  border: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  color: #2f2203;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-main);
+}
+
+.form-section {
+  margin-top: 30px;
+  background: rgba(25, 35, 58, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.form-section h2 {
+  margin: 0 0 12px;
+}
+
+.enroll-form {
+  display: grid;
+  gap: 10px;
+}
+
+.form-message {
+  margin: 12px 0 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.footer {
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--text-muted);
+  padding: 16px;
+}
+
+@media (max-width: 620px) {
+  .header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}

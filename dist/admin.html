@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — JS Heroes Academy</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="header-root"></div>
+  <main>
+    <section>
+      <div class="admin-header">
+        <h2>ADMIN <span>PANEL</span></h2>
+        <div class="admin-actions">
+          <a href="/api/export/users" class="btn btn-gold btn-sm">📄 <span class="lang-en">Export to Excel</span><span class="lang-kz">Экспорт в Excel</span></a>
+          <button class="btn btn-primary btn-sm" onclick="openModal()">+ <span class="lang-en">Add Course</span><span class="lang-kz">Курс қосу</span></button>
+        </div>
+      </div>
+      <div class="admin-stats" id="adminStats"></div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="switchTab('users',this)">Users</button>
+        <button class="admin-tab" onclick="switchTab('courses',this)"><span class="lang-en">Courses</span><span class="lang-kz">Курстар</span></button>
+        <button class="admin-tab" onclick="switchTab('scores',this)"><span class="lang-en">Scores</span><span class="lang-kz">Балдар</span></button>
+      </div>
+      <div id="usersTab">
+        <table class="admin-table"><thead><tr>
+          <th>ID</th><th><span class="lang-en">Name</span><span class="lang-kz">Аты</span></th><th><span class="lang-en">Phone</span><span class="lang-kz">Телефон</span></th><th>Email</th><th><span class="lang-en">Date</span><span class="lang-kz">Күні</span></th><th><span class="lang-en">Actions</span><span class="lang-kz">Әрекет</span></th>
+        </tr></thead><tbody id="usersBody"></tbody></table>
+        <p id="noUsers" style="color:var(--text-muted);text-align:center;padding:24px;display:none;">
+          <span class="lang-en">No users registered yet</span><span class="lang-kz">Тіркелген пайдаланушылар жоқ</span>
+        </p>
+      </div>
+      <div id="coursesTab" class="hidden">
+        <table class="admin-table"><thead><tr>
+          <th>ID</th><th>Title</th><th>Title (KZ)</th><th><span class="lang-en">Level</span><span class="lang-kz">Деңгей</span></th><th>Type</th><th><span class="lang-en">Actions</span><span class="lang-kz">Әрекет</span></th>
+        </tr></thead><tbody id="coursesBody"></tbody></table>
+      </div>
+      <div id="scoresTab" class="hidden">
+        <table class="admin-table"><thead><tr>
+          <th>User</th><th>Course</th><th>Score</th><th>%</th><th>Date</th>
+        </tr></thead><tbody id="scoresBody"></tbody></table>
+      </div>
+    </section>
+  </main>
+ 
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <h3>ADD <span>COURSE</span></h3>
+      <form id="addForm">
+        <div class="form-group"><label>Title (EN)</label><input type="text" id="cTitle" required></div>
+        <div class="form-group"><label>Title (KZ)</label><input type="text" id="cTitleKz" required></div>
+        <div class="form-group"><label>Description (EN)</label><input type="text" id="cDesc"></div>
+        <div class="form-group"><label>Description (KZ)</label><input type="text" id="cDescKz"></div>
+        <div class="form-group"><label>Category</label>
+          <select id="cCat" class="filter-select" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border-solid);background:var(--bg-primary);color:var(--text);">
+            <option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Hero Type</label>
+          <select id="cHero" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border-solid);background:var(--bg-primary);color:var(--text);">
+            <option value="tech">Tech</option><option value="magic">Magic</option><option value="mutation">Mutation</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Image URL</label><input type="url" id="cImg"></div>
+        <div class="form-group"><label>YouTube Embed URL</label><input type="url" id="cVideo"></div>
+        <div style="display:flex;gap:10px">
+          <button type="submit" class="btn btn-primary" style="flex:1"><span class="lang-en">Add</span><span class="lang-kz">Қосу</span></button>
+          <button type="button" class="btn btn-secondary" style="flex:1" onclick="closeModal()"><span class="lang-en">Cancel</span><span class="lang-kz">Бас тарту</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+ 
+  <div class="modal-overlay" id="userModal">
+    <div class="modal">
+      <h3>USER <span>DATA</span></h3>
+      <div id="userData"></div>
+      <button class="btn btn-secondary mt-24" style="width:100%" onclick="document.getElementById('userModal').classList.remove('active')"><span class="lang-en">Close</span><span class="lang-kz">Жабу</span></button>
+    </div>
+  </div>
+
+  <div id="footer-root"></div>
+  <script src="/js/main.js"></script>
+  <script>
+    let usersData=[], coursesData=[], scoresData=[];
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('header-root').innerHTML = getHeader('');
+      document.getElementById('footer-root').innerHTML = getFooter();
+      initPage(); loadAll();
+    });
+    async function loadAll() {
+      const [u,c,s] = await Promise.all([fetch('/api/users'),fetch('/api/courses'),fetch('/api/scores')]);
+      usersData=await u.json(); coursesData=await c.json(); scoresData=await s.json();
+      renderStats(); renderUsers(); renderCourses(); renderScores(); setLanguage(currentLang);
+    }
+    function renderStats() {
+      document.getElementById('adminStats').innerHTML = `
+        <div class="admin-stat"><div class="label">Users</div><div class="value">${usersData.length}</div></div>
+        <div class="admin-stat"><div class="label">Courses</div><div class="value">${coursesData.length}</div></div>
+        <div class="admin-stat"><div class="label">Scores</div><div class="value">${scoresData.length}</div></div>`;
+    }
+    function renderUsers() {
+      const b=document.getElementById('usersBody');
+      document.getElementById('noUsers').style.display = usersData.length?'none':'block';
+      b.innerHTML = usersData.map(u => `<tr>
+        <td>${u.id}</td><td>${u.name}</td><td>${u.phone}</td><td>${u.email}</td>
+        <td>${new Date(u.registeredAt).toLocaleDateString()}</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="viewUser(${u.id})">View</button> <button class="btn btn-sm btn-danger" onclick="delUser(${u.id})">Delete</button></td>
+      </tr>`).join('');
+    }
+    function renderCourses() {
+      document.getElementById('coursesBody').innerHTML = coursesData.map(c => `<tr>
+        <td>${c.id}</td><td>${c.en.title}</td><td>${c.kz.title}</td>
+        <td><span class="tag tag-${c.category}">${c.category}</span></td>
+        <td><span class="tag tag-${c.heroType}">${c.heroType}</span></td>
+        <td><button class="btn btn-sm btn-danger" onclick="delCourse(${c.id})">Delete</button></td>
+      </tr>`).join('');
+    }
+    function renderScores() {
+      document.getElementById('scoresBody').innerHTML = scoresData.map(s => {
+        const c = coursesData.find(x=>x.id===s.courseId);
+        return `<tr><td>${s.userName}</td><td>${c?c.en.title:s.courseId}</td><td>${s.score}/${s.total}</td><td>${s.percentage}%</td><td>${new Date(s.date).toLocaleDateString()}</td></tr>`;
+      }).join('');
+    }
+    function switchTab(t,el) {
+      document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active')); el.classList.add('active');
+      ['users','courses','scores'].forEach(x => document.getElementById(x+'Tab').classList.toggle('hidden',x!==t));
+    }
+    function viewUser(id) {
+      const u=usersData.find(x=>x.id===id); if(!u) return;
+      document.getElementById('userData').innerHTML = `
+        <div style="display:grid;gap:10px;font-size:14px;">
+          <div><strong style="color:var(--text-secondary)">Name:</strong> ${u.name}</div>
+          <div><strong style="color:var(--text-secondary)">Phone:</strong> ${u.phone}</div>
+          <div><strong style="color:var(--text-secondary)">Email:</strong> ${u.email}</div>
+          <div><strong style="color:var(--text-secondary)">Registered:</strong> ${new Date(u.registeredAt).toLocaleString()}</div>
+          <div><strong style="color:var(--text-secondary)">Enrolled:</strong> ${u.enrolledCourses?.length||0} courses</div>
+        </div>`;
+      document.getElementById('userModal').classList.add('active');
+    }
+    async function delUser(id) { if(!confirm('Delete user?')) return; await fetch(`/api/users/${id}`,{method:'DELETE'}); loadAll(); }
+    async function delCourse(id) { if(!confirm('Delete course?')) return; await fetch(`/api/courses/${id}`,{method:'DELETE'}); loadAll(); }
+    function openModal() { document.getElementById('addModal').classList.add('active'); }
+    function closeModal() { document.getElementById('addModal').classList.remove('active'); }
+    document.getElementById('addForm').addEventListener('submit', async(e)=>{
+      e.preventDefault();
+      await fetch('/api/courses',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        en:{title:document.getElementById('cTitle').value,desc:document.getElementById('cDesc').value},
+        kz:{title:document.getElementById('cTitleKz').value,desc:document.getElementById('cDescKz').value},
+        category:document.getElementById('cCat').value,
+        heroType:document.getElementById('cHero').value,
+        img:document.getElementById('cImg').value,
+        video:document.getElementById('cVideo').value
+      })});
+      closeModal(); document.getElementById('addForm').reset(); loadAll();
+    });
+  </script>
+</body>
+</html>

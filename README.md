@@ -1,63 +1,52 @@
-# JS Heroes Academy
+# JS Heroes Academy (React + Express)
 
-Marvel стиліндегі JavaScript оқыту платформасы. 20 курс, 20 тест, қазақ/ағылшын тілдерінде, Telegram бот.
+Толық жоба енді React SPA форматында жұмыс істейді, ал backend Express API арқылы деректерді тұрақты сақтайды.
 
-## 🚀 Жүктеу
+## Негізгі жаңартулар
+
+- Ескі HTML UI/UX React-қа көшірілді (дизайн/класс құрылымы сақталды)
+- Telegram bot батырмасы (floating CTA) қосылды және telemetry есепке алынады
+- Quiz сұрақтары әр курсқа кеңейтілді (4 → 6)
+- Admin panel күшейтілді:
+  - Users/Courses/Scores/Analytics табтары
+  - Full Excel report экспорты
+  - Analytics JSON экспорты
+- Пайдаланушылар, курстар, пікірлер, баллдар серверде `data/store.json` ішінде сақталады
+- YouTube видеолар normalize жасалып (`youtube-nocookie embed`) тұрақтандырылды
+
+## Іске қосу
+
+### 1) Backend
 
 ```bash
-cd /Users/milady/Desktop/JSHA
-npm install
-npm start
+npm run server
 ```
 
-**Сайт:** http://localhost:3003
+Server: `http://localhost:3003`
 
-## 🤖 Telegram Бот
+### 2) Frontend (dev)
 
-Ботты іске қосу үшін:
-
-1. **@BotFather** ашып, `/newbot` жазыңыз
-2. Бот атауын және username беріңіз (мысалы: `jsha_bot`)
-3. Алынған **токенді** сақтаңыз
-4. `.env` файл жасаңыз:
-   ```
-   BOT_TOKEN=7123456789:ABCdefGHIjkl...
-   WEB_URL=http://localhost:3003
-   ```
-5. Серверді қайта іске қосыңыз: `npm start`
-
-### Бот командалары
-
-| Команда | Сипаттама |
-|---------|-----------|
-| `/start` | Бастау мен мәзір |
-| `/courses` | 20 курс тізімі |
-| `/quiz` | Тесттер тізімі |
-| `/quiz 5` | 5-ші курс бойынша тест |
-| `/stats` | Статистиканы көру |
-| `/contact` | Байланыс ақпараты |
-| `/help` | Командалар көмекшісі |
-
-## 🛠 Функциялар
-
-- ✅ Figma дизайны (Dark: purple, Light: blue)
-- ✅ EN/KZ тіл ауыстыру
-- ✅ Dark/Light режим
-- ✅ 20 курс, YouTube видеолар
-- ✅ Пікірлер (басты бет + әр сабақ)
-- ✅ Админ панель + Excel экспорт
-- ✅ 20 тест (тест режимі + карточкалар)
-- ✅ Балл сақтау
-- ✅ Telegram бот
-
-## 📁 Құрылым
-
+```bash
+npm run dev
 ```
-/public
-  /css/style.css    — Барлық стильдер
-  /js/main.js       — Тіл/тема жүйелері
-  *.html            — HTML беттер
-server.js           — Express сервер + API
-bot.js              — Telegram бот
-.env                — Конфигурация
+
+Vite: `http://localhost:5173` (`/api` автоматты түрде backend-ке proxy болады)
+
+### 3) Production build
+
+```bash
+npm run build
+npm run server
 ```
+
+`server.js` дайын `dist` бар болса, SPA-ны сол жерден береді.
+
+## Деректер сақтау
+
+- Persistence файлы: `data/store.json`
+- Бұл файлда users/reviews/scores/courses/quizzes/telemetry сақталады
+
+## Telegram
+
+- Бот сілтемесі: `https://t.me/jsheroes_bot`
+- Bot process `server.js` іске қосылғанда `bot.js` арқылы көтеріледі (токен дұрыс орнатылған жағдайда)
