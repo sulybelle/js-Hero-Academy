@@ -680,10 +680,12 @@ app.get('/course/:id', serveApp);
 app.listen(PORT, () => {
   console.log(`JS Heroes Academy running at http://localhost:${PORT}`);
 
-  try {
-    const bot = require('./bot.js');
-    bot.startBot();
-  } catch (error) {
-    console.log('Telegram bot could not start:', error.message);
-  }
+ (async () => {
+    try {
+        const bot = await import('./bot.js');
+        console.log("Бот сәтті іске қосылды!");
+    } catch (err) {
+        console.error("Ботты жүктеу қатесі:", err);
+    }
+})();
 });
