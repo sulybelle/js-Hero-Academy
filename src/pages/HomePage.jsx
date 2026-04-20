@@ -121,7 +121,6 @@ export default function HomePage({ navigate }) {
     try {
       await api.addReview(payload);
     } catch {
-      // offline fallback сақталды
     }
 
     setReviewName('');

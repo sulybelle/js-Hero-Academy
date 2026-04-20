@@ -248,7 +248,7 @@ bot.hears('📞 Байланыс', (ctx) => ctx.replyWithHTML('📞 Байлан
 });
 
  async function startBot() {
-  if (BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE') {
+  if (BOT_TOKEN === '8673437480:AAGFZMw_0QJbyuhRZEaesDTT7-p3RVPZ-jk') {
     console.log('\n🔴 Telegram бот іске қосылмады — токен орнатылмаған.\n');
     console.log('📋 Ботты іске қосу үшін:');
     console.log('1. @BotFather-ға жазыңыз');
