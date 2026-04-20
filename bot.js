@@ -1,7 +1,6 @@
- const { Telegraf, Markup } = require('telegraf');
+const { Telegraf, Markup } = require('telegraf');
 
 const BOT_TOKEN = process.env.BOT_TOKEN || '8673437480:AAGFZMw_0QJbyuhRZEaesDTT7-p3RVPZ-jk';
-
 const WEB_URL = process.env.WEB_URL || 'http://localhost:3003';
 
 const bot = new Telegraf(BOT_TOKEN);
@@ -107,7 +106,6 @@ bot.command('quiz', async (ctx) => {
   if (courseId) {
      await startQuiz(ctx, parseInt(courseId));
   } else {
- 
     try {
       const fetch = (await import('node-fetch')).default;
       const [quizRes, courseRes] = await Promise.all([
@@ -242,21 +240,22 @@ bot.hears('🎯 Тесттер', (ctx) => ctx.replyWithHTML('🎯 Тесттер
 bot.hears('📊 Статистика', (ctx) => ctx.replyWithHTML('📊 Статистика үшін /stats жазыңыз'));
 bot.hears('📞 Байланыс', (ctx) => ctx.replyWithHTML('📞 Байланыс үшін /contact жазыңыз'));
 
- bot.catch((err, ctx) => {
+bot.catch((err, ctx) => {
   console.error(`Ошибка для ${ctx.updateType}`, err);
   ctx.reply('❌ Қате орын алды. Кейінірек қайта көріңіз.');
 });
 
+async function startBot() {
   try {
-     await bot.telegram.deleteWebhook();
-     await bot.launch();
+    await bot.telegram.deleteWebhook();
+    await bot.launch(); // Енді қате бермейді, себебі async функцияның ішінде
     console.log('✅ Telegram бот іске қосылды!');
     console.log('🤖 @ваш_бот_username');
     console.log('📊 Командалар: /start, /courses, /quiz, /stats, /help');
   } catch (err) {
     console.error('❌ Ботты іске қосу сәтсіз:', err.message);
   }
-
+}
  
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));

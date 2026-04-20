@@ -680,12 +680,10 @@ app.get('/course/:id', serveApp);
 app.listen(PORT, () => {
   console.log(`JS Heroes Academy running at http://localhost:${PORT}`);
 
- (async () => {
-    try {
-        const bot = await import('./bot.js');
-        console.log("Бот сәтті іске қосылды!");
-    } catch (err) {
-        console.error("Ботты жүктеу қатесі:", err);
-    }
-})();
+  try {
+    const { startBot } = require('./bot.js');  
+    startBot();
+  } catch (err) {
+    console.error("Ботты жүктеу қатесі:", err);
+  }
 });
