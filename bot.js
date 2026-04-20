@@ -247,19 +247,6 @@ bot.hears('📞 Байланыс', (ctx) => ctx.replyWithHTML('📞 Байлан
   ctx.reply('❌ Қате орын алды. Кейінірек қайта көріңіз.');
 });
 
- async function startBot() {
-  if (BOT_TOKEN === '8673437480:AAGFZMw_0QJbyuhRZEaesDTT7-p3RVPZ-jk') {
-    console.log('\n🔴 Telegram бот іске қосылмады — токен орнатылмаған.\n');
-    console.log('📋 Ботты іске қосу үшін:');
-    console.log('1. @BotFather-ға жазыңыз');
-    console.log('2. /newbot командасымен жаңа бот жасаңыз');
-    console.log('3. Алған токенді BOT_TOKEN айнымалысына енгізіңіз:');
-    console.log('   • .env файл: BOT_TOKEN=ваш_токен');
-    console.log('   • Или export BOT_TOKEN=ваш_токен');
-    console.log('   • Или bot.js файлында YOUR_BOT_TOKEN_HERE орнына жазу\n');
-    return;
-  }
-
   try {
      await bot.telegram.deleteWebhook();
      await bot.launch();
@@ -269,7 +256,7 @@ bot.hears('📞 Байланыс', (ctx) => ctx.replyWithHTML('📞 Байлан
   } catch (err) {
     console.error('❌ Ботты іске қосу сәтсіз:', err.message);
   }
-}
+
  
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
