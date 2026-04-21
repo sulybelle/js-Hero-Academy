@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import AppLink from './AppLink';
+import Breadcrumbs from './Breadcrumbs';
 
 function Logo() {
   return (
@@ -128,7 +129,11 @@ export default function SiteLayout({ children }) {
         </div>
       </header>
 
-      {content}
+      <Breadcrumbs />
+
+      <div className="page-transition">
+        {content}
+      </div>
 
       <footer>
         <div className="footer-inner">

@@ -1,7 +1,75 @@
 {
-  "users": [],
-  "reviews": [],
-  "scores": [],
+  "users": [
+    {
+      "id": 1776670061451,
+      "name": "Sabina",
+      "phone": "+7 747 840 3626",
+      "email": "sab@icloud.com",
+      "password": "12345s",
+      "enrolledCourses": [
+        1,
+        12
+      ],
+      "registeredAt": "2026-04-20T07:27:41.451Z"
+    },
+    {
+      "id": 1776762406440,
+      "name": "Mia",
+      "phone": "+9987654432",
+      "email": "thebest@icloud.com",
+      "password": "0987654321",
+      "enrolledCourses": [
+        20
+      ],
+      "registeredAt": "2026-04-21T09:06:46.440Z"
+    }
+  ],
+  "reviews": [
+    {
+      "id": 1776762483759,
+      "courseId": null,
+      "userName": "Mia",
+      "text": "good! I like it, thank you so much🫶🏻",
+      "rating": 5,
+      "createdAt": "2026-04-21T09:08:03.759Z"
+    },
+    {
+      "id": 1776762520321,
+      "courseId": null,
+      "userName": "Monika",
+      "text": "great, amazing, wonderful",
+      "rating": 5,
+      "createdAt": "2026-04-21T09:08:40.321Z"
+    },
+    {
+      "id": 1776762569113,
+      "courseId": 20,
+      "userName": "Jassika",
+      "text": "Рахмет өте пайдалы болды!",
+      "rating": 5,
+      "createdAt": "2026-04-21T09:09:29.113Z"
+    }
+  ],
+  "scores": [
+    {
+      "userId": 1776670061451,
+      "userName": "Sabina",
+      "courseId": 5,
+      "score": 4,
+      "total": 6,
+      "percentage": 67,
+      "date": "2026-04-20T07:34:51.278Z"
+    },
+    {
+      "userId": 1776670061451,
+      "userName": "Sabina",
+      "courseId": 12,
+      "score": 4,
+      "total": 6,
+      "percentage": 67,
+      "date": "2026-04-21T09:03:53.548Z"
+    }
+  ],
   "courses": [
     {
       "id": 1,
@@ -1727,7 +1795,7 @@
     }
   ],
   "telemetry": {
-    "telegramClicks": 5
+    "telegramClicks": 7
   },
-  "updatedAt": "2026-04-20T06:10:10.151Z"
+  "updatedAt": "2026-04-21T09:09:29.113Z"
 }
