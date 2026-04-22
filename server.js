@@ -2,172 +2,76 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const ExcelJS = require('exceljs');
+const bcrypt = require('bcryptjs');
+const { DatabaseSync } = require('node:sqlite');
 
 const app = express();
 const PORT = 3003;
+
 const DATA_DIR = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'store.json');
+const STORE_FILE = path.join(DATA_DIR, 'store.json');
+const DB_FILE = path.join(DATA_DIR, 'lab6.sqlite');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const DIST_DIR = path.join(__dirname, 'dist');
 const DIST_INDEX = path.join(DIST_DIR, 'index.html');
 const VITE_INDEX = path.join(__dirname, 'index.html');
 
-app.use(express.json());
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^\+?[\d\s\-()]{10,20}$/;
+const HERO_TYPES = new Set(['tech', 'magic', 'mutation']);
+const COURSE_LEVELS = new Set(['beginner', 'intermediate', 'advanced']);
+
+const BONUS_QUESTIONS = [
+  {
+    en: 'Which habit improves JavaScript learning the fastest?',
+    kz: 'JavaScript-ti tez menggeruge qai adet en paidaly?',
+    options: ['Ignoring errors', 'Daily coding practice', 'Watching only theory', 'Skipping exercises'],
+    correct: 1,
+  },
+  {
+    en: 'Where can you track your quiz progress in this platform?',
+    kz: 'Os y platformada test progressin qaidan kore alasyz?',
+    options: ['Only in browser history', 'Only in Telegram', 'In saved score history', 'It is not saved'],
+    correct: 2,
+  },
+];
+
+const DEFAULT_SEED = {
+  users: [],
+  courses: [
+    {
+      id: 1,
+      en: { title: 'Introduction to JavaScript', desc: 'Start from the fundamentals and build real logic.' },
+      kz: { title: 'JavaScript-ke kirispe', desc: 'Negizden bastap naqty logika qurudy uireningiz.' },
+      category: 'beginner',
+      heroType: 'tech',
+      video: 'https://www.youtube.com/watch?v=W6NZfCO5SIk',
+      img: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop',
+    },
+  ],
+  quizzes: [
+    {
+      courseId: 1,
+      questions: [
+        {
+          en: 'What is JavaScript mostly used for?',
+          kz: 'JavaScript kobinese ne ushin qoldanylady?',
+          options: ['Operating systems', 'Web interactivity', 'Image editing', 'Database engine'],
+          correct: 1,
+        },
+      ],
+    },
+  ],
+  reviews: [],
+  scores: [],
+  telemetry: { telegramClicks: 0 },
+};
+
+app.use(express.json({ limit: '1mb' }));
 app.use(express.static(PUBLIC_DIR));
 if (fs.existsSync(DIST_DIR)) {
   app.use(express.static(DIST_DIR));
 }
- 
-let users = [];
-let reviews = [];
-let scores = [];
-let telemetry = { telegramClicks: 0 };
-
-const courses = [
-  { id:1, en:{title:'Introduction to JavaScript',desc:'Begin your hero journey — learn what JavaScript is and how it powers the web.'},kz:{title:'JavaScript-ке кіріспе',desc:'Батыр жолыңызды бастаңыз — JavaScript деген не және ол вебті қалай басқарады.'},category:'beginner',heroType:'tech',video:'https://www.youtube.com/embed/W6NZfCO5SIk',img:'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop'},
-  { id:2, en:{title:'Variables & Data Types',desc:'Master the building blocks: var, let, const and primitive types.'},kz:{title:'Айнымалылар мен деректер түрлері',desc:'Негізгі құрылымдарды меңгеріңіз: var, let, const және қарапайым түрлер.'},category:'beginner',heroType:'tech',video:'https://www.youtube.com/embed/edlFjlzxkSI',img:'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop'},
-  { id:3, en:{title:'Operators & Expressions',desc:'Wield arithmetic, comparison and logical operators like a true hero.'},kz:{title:'Операторлар мен өрнектер',desc:'Арифметикалық, салыстыру және логикалық операторларды шебер қолданыңыз.'},category:'beginner',heroType:'tech',video:'https://www.youtube.com/embed/FZzyij43A54',img:'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&h=250&fit=crop'},
-  { id:4, en:{title:'Control Flow: if / else / switch',desc:'Make decisions in your code — direct the flow like a strategist.'},kz:{title:'Басқару ағыны: if / else / switch',desc:'Кодта шешім қабылдаңыз — ағынды стратег сияқты басқарыңыз.'},category:'beginner',heroType:'tech',video:'https://www.youtube.com/embed/IsG4Xd6LlsM',img:'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=250&fit=crop'},
-  { id:5, en:{title:'Loops: for, while, do-while',desc:'Repeat actions efficiently — loops are the backbone of automation.'},kz:{title:'Циклдар: for, while, do-while',desc:'Әрекеттерді тиімді қайталаңыз — циклдар автоматтандырудың негізі.'},category:'beginner',heroType:'tech',video:'https://www.youtube.com/embed/Kn06785vJyg',img:'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&h=250&fit=crop'},
-  { id:6, en:{title:'Functions & Scope',desc:'Create reusable powers — functions are your super abilities.'},kz:{title:'Функциялар мен аумақ',desc:'Қайта пайдаланылатын күштер жасаңыз — функциялар сіздің суперқабілеттеріңіз.'},category:'beginner',heroType:'tech',video:'https://www.youtube.com/embed/N8ap4k_1QEQ',img:'https://i.ytimg.com/vi/t_fCi2spRz0/maxresdefault.jpg'},
-  { id:7, en:{title:'Arrays & Array Methods',desc:'Store collections of data and transform them with powerful methods.'},kz:{title:'Массивтер мен әдістері',desc:'Деректер жиынтығын сақтаңыз және оларды қуатты әдістермен түрлендіріңіз.'},category:'beginner',heroType:'tech',video:'https://www.youtube.com/embed/oigfaZ5ApsM',img:'https://images.unsplash.com/photo-1515879218367-8466d910auj7?w=400&h=250&fit=crop'},
-  { id:8, en:{title:'Objects & JSON',desc:'Structure your data like a S.H.I.E.L.D. database with objects.'},kz:{title:'Объектілер мен JSON',desc:'S.H.I.E.L.D. деректер базасы сияқты деректеріңізді құрылымдаңыз.'},category:'intermediate',heroType:'magic',video:'https://www.youtube.com/embed/PFmuCDHHpwk',img:'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop'},
-  { id:9, en:{title:'DOM Manipulation',desc:'Control the web page — select, modify and create elements at will.'},kz:{title:'DOM манипуляциясы',desc:'Веб-бетті басқарыңыз — элементтерді таңдаңыз, өзгертіңіз және жасаңыз.'},category:'intermediate',heroType:'magic',video:'https://www.youtube.com/embed/y17RuWkWdn8',img:'https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=400&h=250&fit=crop'},
-  { id:10, en:{title:'Events & Event Handling',desc:'React to user actions — clicks, inputs and keyboard like Spider-sense.'},kz:{title:'Оқиғалар мен оқиға өңдеу',desc:'Пайдаланушы әрекеттеріне жауап беріңіз — клик, енгізу, пернетақта.'},category:'intermediate',heroType:'magic',video:'https://www.youtube.com/embed/XF1_MlZ5l6M',img:'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop'},
-  { id:11, en:{title:'ES6 Arrow Functions',desc:'Write cleaner, shorter functions with the modern arrow syntax.'},kz:{title:'ES6 көрсеткі функциялары',desc:'Заманауи көрсеткі синтаксисімен таза, қысқа функциялар жазыңыз.'},category:'intermediate',heroType:'magic',video:'https://www.youtube.com/embed/h33Srr5J9nY',img:'https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=400&h=250&fit=crop'},
-  { id:12, en:{title:'Destructuring & Spread',desc:'Unpack values from arrays and objects like opening a mystery box.'},kz:{title:'Деструктуризация мен Spread',desc:'Массивтер мен объектілерден мәндерді ашыңыз.'},category:'intermediate',heroType:'magic',video:'https://www.youtube.com/embed/NIq3qLaHCIs',img:'https://images.unsplash.com/photo-1550439062-609e1531270e?w=400&h=250&fit=crop'},
-  { id:13, en:{title:'Promises',desc:'Handle asynchronous missions with Promises — never lose track.'},kz:{title:'Promises (уәделер)',desc:'Асинхронды миссияларды Promises арқылы басқарыңыз.'},category:'intermediate',heroType:'magic',video:'https://www.youtube.com/embed/DHvZLI7Db8E',img:'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=250&fit=crop'},
-  { id:14, en:{title:'Async / Await',desc:'Write asynchronous code that reads like a story — clean and powerful.'},kz:{title:'Async / Await',desc:'Асинхронды кодты оңай және қуатты жазыңыз.'},category:'advanced',heroType:'magic',video:'https://www.youtube.com/embed/V_Kr9OSfDeU',img:'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=250&fit=crop'},
-  { id:15, en:{title:'Fetch API & AJAX',desc:'Communicate with servers — send and receive data across the network.'},kz:{title:'Fetch API және AJAX',desc:'Серверлермен байланысыңыз — желі арқылы деректерді жіберіңіз және алыңыз.'},category:'advanced',heroType:'mutation',video:'https://www.youtube.com/embed/cuEtnrL9-H0',img:'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop'},
-  { id:16, en:{title:'Local Storage & Session',desc:'Save data in the browser — persist hero progress between sessions.'},kz:{title:'Local Storage және Session',desc:'Деректерді браузерде сақтаңыз — сессиялар арасында прогресті сақтаңыз.'},category:'advanced',heroType:'mutation',video:'https://www.youtube.com/embed/AUOzvFzdIk4',img:'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=250&fit=crop'},
-  { id:17, en:{title:'Error Handling & Debugging',desc:'Catch bugs like a detective — try/catch and debugging techniques.'},kz:{title:'Қателерді өңдеу мен жөндеу',desc:'Қателерді детектив сияқты табыңыз — try/catch және жөндеу техникалары.'},category:'advanced',heroType:'mutation',video:'https://www.youtube.com/embed/cFTFtuEQ-10',img:'https://images.unsplash.com/photo-1607799279861-4dd421887fc5?w=400&h=250&fit=crop'},
-  { id:18, en:{title:'Classes & OOP',desc:'Build with blueprints — create classes and use object-oriented patterns.'},kz:{title:'Кластар мен ООП',desc:'Жоспарлармен құрыңыз — кластар жасаңыз және ОБП үлгілерін қолданыңыз.'},category:'advanced',heroType:'mutation',video:'https://www.youtube.com/embed/2ZphE5HcQPQ',img:'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&h=250&fit=crop'},
-  { id:19, en:{title:'Modules: import / export',desc:'Organize your code into modules — teamwork makes the dream work.'},kz:{title:'Модульдер: import / export',desc:'Кодыңызды модульдерге бөліңіз — командалық жұмыс күшті.'},category:'advanced',heroType:'mutation',video:'https://www.youtube.com/embed/cRHQNNcYf6s',img:'https://images.unsplash.com/photo-1550439062-609e1531270e?w=400&h=250&fit=crop'},
-  { id:20, en:{title:'Node.js Introduction',desc:'Take JavaScript to the server side — become a full-stack hero.'},kz:{title:'Node.js кіріспе',desc:'JavaScript-ті сервер жағына апарыңыз — толық стек батыр болыңыз.'},category:'advanced',heroType:'mutation',video:'https://www.youtube.com/embed/TlB_eWDSMt4',img:'https://images.unsplash.com/photo-1619410283995-43d9134e7656?w=400&h=250&fit=crop'}
-];
-
-const quizzes = [
-  { courseId:1, questions:[
-    {en:'What is JavaScript primarily used for?',kz:'JavaScript негізінен не үшін қолданылады?',options:['Styling web pages','Adding interactivity to websites','Database management','Operating system development'],correct:1},
-    {en:'Where does JavaScript run?',kz:'JavaScript қайда жұмыс істейді?',options:['Only on servers','Only in browsers','In browsers and servers','Only in mobile apps'],correct:2},
-    {en:'Which tag is used to include JavaScript in HTML?',kz:'HTML-де JavaScript қосу үшін қандай тег қолданылады?',options:['<js>','<javascript>','<script>','<code>'],correct:2},
-    {en:'Who created JavaScript?',kz:'JavaScript-ті кім жасады?',options:['Tim Berners-Lee','Brendan Eich','James Gosling','Guido van Rossum'],correct:1}
-  ]},
-  { courseId:2, questions:[
-    {en:'Which keyword declares a block-scoped variable?',kz:'Блок аумағындағы айнымалыны қай кілт сөз жариялайды?',options:['var','let','both var and let','none'],correct:1},
-    {en:'What is the type of NaN?',kz:'NaN-ның түрі қандай?',options:['string','undefined','number','NaN'],correct:2},
-    {en:'Which is NOT a primitive type?',kz:'Қайсысы қарапайым түр ЕМЕС?',options:['string','boolean','object','number'],correct:2},
-    {en:'What does typeof null return?',kz:'typeof null не қайтарады?',options:['"null"','"undefined"','"object"','"boolean"'],correct:2}
-  ]},
-  { courseId:3, questions:[
-    {en:'What does === check?',kz:'=== не тексереді?',options:['Only value','Only type','Value and type','Neither'],correct:2},
-    {en:'What is 5 + "3" in JavaScript?',kz:'JavaScript-те 5 + "3" нәтижесі қандай?',options:['8','53','"53"','Error'],correct:2},
-    {en:'Which is the logical AND operator?',kz:'Логикалық ЖӘНЕ операторы қайсы?',options:['||','&&','!','??'],correct:1},
-    {en:'What does ++ do?',kz:'++ не істейді?',options:['Decrements by 1','Increments by 1','Multiplies by 2','Divides by 2'],correct:1}
-  ]},
-  { courseId:4, questions:[
-    {en:'Which statement is used for multiple conditions?',kz:'Көптеген шарттар үшін қай оператор қолданылады?',options:['for','while','switch','do'],correct:2},
-    {en:'What is the default case in switch?',kz:'Switch-те default case не?',options:['First case','Last case','Runs if no case matches','Required case'],correct:2},
-    {en:'What does "else if" allow?',kz:'"else if" не мүмкіндік береді?',options:['Looping','Multiple conditions','Function calls','Variable declaration'],correct:1},
-    {en:'Which value is falsy?',kz:'Қай мән falsy болады?',options:['1','"hello"','0','[]'],correct:2}
-  ]},
-  { courseId:5, questions:[
-    {en:'Which loop runs at least once?',kz:'Қай цикл кем дегенде бір рет орындалады?',options:['for','while','do-while','for...in'],correct:2},
-    {en:'What does "break" do in a loop?',kz:'"break" циклде не істейді?',options:['Skips iteration','Exits the loop','Restarts loop','Pauses loop'],correct:1},
-    {en:'What does "continue" do?',kz:'"continue" не істейді?',options:['Exits loop','Skips to next iteration','Stops program','Restarts loop'],correct:1},
-    {en:'for(let i=0; i<3; i++) — how many times?',kz:'for(let i=0; i<3; i++) — неше рет?',options:['2','3','4','1'],correct:1}
-  ]},
-  { courseId:6, questions:[
-    {en:'What is a function?',kz:'Функция дегеніміз не?',options:['A variable','A reusable block of code','A loop','An HTML tag'],correct:1},
-    {en:'What does "return" do?',kz:'"return" не істейді?',options:['Logs to console','Sends back a value','Declares variable','Creates loop'],correct:1},
-    {en:'What is a parameter?',kz:'Параметр деген не?',options:['Return value','Input variable in function definition','A global variable','A constant'],correct:1},
-    {en:'Can functions be stored in variables?',kz:'Функцияларды айнымалыларда сақтауға бола ма?',options:['No','Yes','Only arrow functions','Only named functions'],correct:1}
-  ]},
-  { courseId:7, questions:[
-    {en:'How to add an item to end of array?',kz:'Массив соңына элемент қалай қосасыз?',options:['.pop()','.push()','.shift()','.unshift()'],correct:1},
-    {en:'What does .filter() return?',kz:'.filter() не қайтарады?',options:['One item','A new filtered array','A boolean','undefined'],correct:1},
-    {en:'What does .map() do?',kz:'.map() не істейді?',options:['Filters array','Transforms each element','Sorts array','Removes elements'],correct:1},
-    {en:'How to get array length?',kz:'Массив ұзындығын қалай аласыз?',options:['.size()','.length','.count()','.total()'],correct:1}
-  ]},
-  { courseId:8, questions:[
-    {en:'How to access object property?',kz:'Объект қасиетіне қалай қол жеткізесіз?',options:['obj->key','obj.key or obj["key"]','obj::key','obj(key)'],correct:1},
-    {en:'What is JSON?',kz:'JSON дегеніміз не?',options:['A database','JavaScript Object Notation','A framework','A library'],correct:1},
-    {en:'Which method converts JSON string to object?',kz:'JSON жолын объектіге қай әдіс түрлендіреді?',options:['JSON.stringify()','JSON.parse()','JSON.convert()','JSON.toObject()'],correct:1},
-    {en:'What does Object.keys() return?',kz:'Object.keys() не қайтарады?',options:['Values array','Keys array','Boolean','Object copy'],correct:1}
-  ]},
-  { courseId:9, questions:[
-    {en:'What does DOM stand for?',kz:'DOM не білдіреді?',options:['Document Object Model','Data Object Manager','Document Oriented Model','Dynamic Object Model'],correct:0},
-    {en:'How to select element by ID?',kz:'ID бойынша элементті қалай таңдайсыз?',options:['querySelector()','getElementById()','getElementByClass()','findById()'],correct:1},
-    {en:'What does innerHTML do?',kz:'innerHTML не істейді?',options:['Gets/sets CSS','Gets/sets HTML content','Gets/sets attributes','Removes element'],correct:1},
-    {en:'How to create a new element?',kz:'Жаңа элемент қалай жасалады?',options:['document.createElement()','document.newElement()','document.make()','document.build()'],correct:0}
-  ]},
-  { courseId:10, questions:[
-    {en:'What method adds an event listener?',kz:'Оқиға тыңдаушысын қай әдіс қосады?',options:['.onEvent()','.addEventListener()','.listenTo()','.attachEvent()'],correct:1},
-    {en:'Which event fires on click?',kz:'Клик кезінде қай оқиға іске қосылады?',options:['onhover','click','press','activate'],correct:1},
-    {en:'What is event.preventDefault()?',kz:'event.preventDefault() не?',options:['Stops propagation','Prevents default browser action','Removes event','Creates event'],correct:1},
-    {en:'What is event bubbling?',kz:'Event bubbling дегеніміз не?',options:['Events go from parent to child','Events go from child to parent','Events are cancelled','Events are delayed'],correct:1}
-  ]},
-  { courseId:11, questions:[
-    {en:'Correct arrow function syntax?',kz:'Дұрыс көрсеткі функция синтаксисі?',options:['=> function()','() => {}','function =>()','-> () {}'],correct:1},
-    {en:'Do arrow functions have their own "this"?',kz:'Көрсеткі функцияларда өз "this" бар ма?',options:['Yes','No','Sometimes','Only in strict mode'],correct:1},
-    {en:'Can arrow functions be used as constructors?',kz:'Көрсеткі функцияларды конструктор ретінде қолдануға бола ма?',options:['Yes','No','Only with new keyword','Only in classes'],correct:1},
-    {en:'Shortest arrow function form?',kz:'Ең қысқа көрсеткі функция формасы?',options:['x => x * 2','(x) => { return x * 2 }','function(x) { return x*2 }','x -> x * 2'],correct:0}
-  ]},
-  { courseId:12, questions:[
-    {en:'What does destructuring do?',kz:'Деструктуризация не істейді?',options:['Destroys variables','Unpacks values from arrays/objects','Creates arrays','Merges objects'],correct:1},
-    {en:'What does the spread operator look like?',kz:'Spread оператор қалай көрінеді?',options:['**','...','::','>>'],correct:1},
-    {en:'const [a, b] = [1, 2]; What is b?',kz:'const [a, b] = [1, 2]; b неге тең?',options:['1','2','undefined','[1,2]'],correct:1},
-    {en:'What does ...rest do in function params?',kz:'Функция параметрлеріндегі ...rest не істейді?',options:['Spreads array','Collects remaining arguments','Creates object','Destroys array'],correct:1}
-  ]},
-  { courseId:13, questions:[
-    {en:'What states can a Promise have?',kz:'Promise қандай күйлерде болады?',options:['start, end','pending, fulfilled, rejected','open, closed','active, inactive'],correct:1},
-    {en:'Which method handles fulfilled promise?',kz:'Орындалған promise-ті қай әдіс өңдейді?',options:['.catch()','.then()','.finally()','.done()'],correct:1},
-    {en:'Which method handles rejected promise?',kz:'Қабылданбаған promise-ті қай әдіс өңдейді?',options:['.then()','.catch()','.reject()','.error()'],correct:1},
-    {en:'What does Promise.all() do?',kz:'Promise.all() не істейді?',options:['Runs one promise','Waits for all promises','Cancels promises','Creates promise'],correct:1}
-  ]},
-  { courseId:14, questions:[
-    {en:'What does "async" keyword do?',kz:'"async" кілт сөзі не істейді?',options:['Makes function synchronous','Makes function return a Promise','Stops execution','Creates loop'],correct:1},
-    {en:'What does "await" do?',kz:'"await" не істейді?',options:['Skips promise','Pauses until promise resolves','Creates promise','Rejects promise'],correct:1},
-    {en:'Can you use await outside async function?',kz:'Await-ті async функциядан тыс қолдануға бола ма?',options:['Yes always','No (except top-level in modules)','Yes in any function','Only in loops'],correct:1},
-    {en:'How to handle errors with async/await?',kz:'Async/await-пен қателерді қалай өңдейміз?',options:['if/else','.catch()','try/catch','switch/case'],correct:2}
-  ]},
-  { courseId:15, questions:[
-    {en:'What does fetch() return?',kz:'fetch() не қайтарады?',options:['Data directly','A Promise','An array','A string'],correct:1},
-    {en:'What method converts response to JSON?',kz:'Жауапты JSON-ға қай әдіс түрлендіреді?',options:['.json()','.toJSON()','.parse()','.convert()'],correct:0},
-    {en:'What HTTP method is used to send data?',kz:'Деректерді жіберу үшін қай HTTP әдіс қолданылады?',options:['GET','POST','DELETE','FETCH'],correct:1},
-    {en:'What is AJAX?',kz:'AJAX дегеніміз не?',options:['A framework','Asynchronous JS and XML','A database','A server'],correct:1}
-  ]},
-  { courseId:16, questions:[
-    {en:'What does localStorage persist?',kz:'localStorage не сақтайды?',options:['Until tab closes','Until browser closes','Until manually cleared','For 24 hours'],correct:2},
-    {en:'How to save data to localStorage?',kz:'localStorage-ға деректерді қалай сақтайсыз?',options:['localStorage.save()','localStorage.setItem()','localStorage.put()','localStorage.add()'],correct:1},
-    {en:'What type does localStorage store?',kz:'localStorage қандай түрді сақтайды?',options:['Objects','Arrays','Strings only','Any type'],correct:2},
-    {en:'How to remove one item?',kz:'Бір элементті қалай жоясыз?',options:['localStorage.delete()','localStorage.removeItem()','localStorage.clear()','localStorage.pop()'],correct:1}
-  ]},
-  { courseId:17, questions:[
-    {en:'What does try/catch do?',kz:'try/catch не істейді?',options:['Creates errors','Handles runtime errors','Loops code','Defines variables'],correct:1},
-    {en:'What keyword throws an error manually?',kz:'Қателікті қолмен қай кілт сөз шығарады?',options:['error','throw','catch','break'],correct:1},
-    {en:'What is "finally" block for?',kz:'"finally" блогы не үшін?',options:['Only runs on error','Runs regardless of error','Replaces catch','Stops program'],correct:1},
-    {en:'Which tool helps debug in browser?',kz:'Браузерде жөндеуге қай құрал көмектеседі?',options:['Terminal','DevTools Console','Text editor','File manager'],correct:1}
-  ]},
-  { courseId:18, questions:[
-    {en:'What keyword creates a class?',kz:'Класс жасау үшін қай кілт сөз қолданылады?',options:['function','object','class','struct'],correct:2},
-    {en:'What is the constructor method?',kz:'constructor әдісі не?',options:['Destroys object','Initializes object','Copies object','Validates object'],correct:1},
-    {en:'What does "extends" do?',kz:'"extends" не істейді?',options:['Creates new class','Inherits from another class','Deletes class','Exports class'],correct:1},
-    {en:'What does "super" keyword do?',kz:'"super" кілт сөзі не істейді?',options:['Creates new object','Calls parent constructor','Deletes parent','Exports parent'],correct:1}
-  ]},
-  { courseId:19, questions:[
-    {en:'What does "export default" do?',kz:'"export default" не істейді?',options:['Imports module','Exports one main thing','Deletes module','Creates variable'],correct:1},
-    {en:'How to import a named export?',kz:'Аталған экспортты қалай импорттайсыз?',options:['import x from','import { x } from','require(x)','include(x)'],correct:1},
-    {en:'What file extension is needed for ES modules in Node?',kz:'Node-да ES модульдері үшін қандай файл кеңейтімі керек?',options:['.js','.mjs','.mod','.es'],correct:1},
-    {en:'Can you have multiple named exports?',kz:'Бірнеше аталған экспорт бола ма?',options:['No','Yes','Only 2','Only in React'],correct:1}
-  ]},
-  { courseId:20, questions:[
-    {en:'What is Node.js?',kz:'Node.js дегеніміз не?',options:['A browser','A JS runtime on server','A database','A CSS framework'],correct:1},
-    {en:'Which module handles HTTP in Node.js?',kz:'Node.js-те HTTP-ні қай модуль өңдейді?',options:['fs','path','http','url'],correct:2},
-    {en:'What is npm?',kz:'npm дегеніміз не?',options:['A browser','Node Package Manager','A compiler','A database'],correct:1},
-    {en:'What does require() do?',kz:'require() не істейді?',options:['Creates file','Imports a module','Deletes module','Runs test'],correct:1}
-  ]}
-];
 
 function normalizeYouTubeEmbed(url) {
   if (!url) return '';
@@ -200,347 +104,940 @@ function normalizeYouTubeEmbed(url) {
   return raw;
 }
 
-function sanitizeCourse(raw, idx = 0) {
-  const id = Number(raw.id) || Date.now() + idx;
+function safeReadStoreSeed() {
+  if (!fs.existsSync(STORE_FILE)) return DEFAULT_SEED;
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(STORE_FILE, 'utf-8'));
+    return {
+      users: Array.isArray(parsed.users) ? parsed.users : DEFAULT_SEED.users,
+      courses: Array.isArray(parsed.courses) && parsed.courses.length ? parsed.courses : DEFAULT_SEED.courses,
+      quizzes: Array.isArray(parsed.quizzes) && parsed.quizzes.length ? parsed.quizzes : DEFAULT_SEED.quizzes,
+      reviews: Array.isArray(parsed.reviews) ? parsed.reviews : DEFAULT_SEED.reviews,
+      scores: Array.isArray(parsed.scores) ? parsed.scores : DEFAULT_SEED.scores,
+      telemetry: parsed.telemetry && typeof parsed.telemetry === 'object' ? parsed.telemetry : DEFAULT_SEED.telemetry,
+    };
+  } catch (error) {
+    console.error('Failed to read store seed:', error.message);
+    return DEFAULT_SEED;
+  }
+}
+
+function sanitizeCourseSeed(raw, idx = 0) {
+  const id = Number(raw?.id) || idx + 1;
   const fallbackImg = 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop';
+  const category = COURSE_LEVELS.has(String(raw?.category || '').toLowerCase())
+    ? String(raw.category).toLowerCase()
+    : 'beginner';
+  const heroType = HERO_TYPES.has(String(raw?.heroType || '').toLowerCase())
+    ? String(raw.heroType).toLowerCase()
+    : 'tech';
+
   return {
     id,
     en: {
-      title: raw?.en?.title || `Course ${id}`,
-      desc: raw?.en?.desc || 'JavaScript learning module.',
+      title: String(raw?.en?.title || `Course ${id}`).trim(),
+      desc: String(raw?.en?.desc || 'JavaScript learning module.').trim(),
     },
     kz: {
-      title: raw?.kz?.title || `Курс ${id}`,
-      desc: raw?.kz?.desc || 'JavaScript оқу модулі.',
+      title: String(raw?.kz?.title || `Kurs ${id}`).trim(),
+      desc: String(raw?.kz?.desc || 'JavaScript oqu moduli.').trim(),
     },
-    category: raw.category || 'beginner',
-    heroType: raw.heroType || 'tech',
-    video: normalizeYouTubeEmbed(raw.video),
-    img: raw.img || fallbackImg,
+    category,
+    heroType,
+    video: normalizeYouTubeEmbed(raw?.video),
+    img: String(raw?.img || fallbackImg).trim(),
   };
 }
 
-const BONUS_QUESTIONS = [
-  {
-    en: 'Which habit improves JavaScript learning the fastest?',
-    kz: 'JavaScript-ті тез меңгеруге қай әдет ең пайдалы?',
-    options: ['Ignoring errors', 'Daily coding practice', 'Watching only theory', 'Skipping exercises'],
-    correct: 1,
-  },
-  {
-    en: 'Where can you track your quiz progress in this platform?',
-    kz: 'Осы платформада тест прогресін қайдан көре аласыз?',
-    options: ['Only in browser history', 'Only in Telegram', 'In saved score history', 'It is not saved'],
-    correct: 2,
-  },
-];
+function toSlug(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
 
-function ensureBonusQuestions() {
-  quizzes.forEach((quiz) => {
-    BONUS_QUESTIONS.forEach((question) => {
-      const exists = quiz.questions.some((q) => q.en === question.en);
-      if (!exists) {
-        quiz.questions.push({ ...question });
-      }
-    });
+function toCategoryName(slug) {
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+
+function parseIntSafe(value, fallback = null) {
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isInteger(parsed) ? parsed : fallback;
+}
+
+function cleanText(value) {
+  return String(value || '').trim();
+}
+
+function isValidEmail(value) {
+  return EMAIL_RE.test(value);
+}
+
+function isValidPhone(value) {
+  return PHONE_RE.test(value);
+}
+
+function sanitizeUserResponse(row, enrolledIds = []) {
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    email: row.email,
+    role: row.role,
+    enrolledCourses: enrolledIds,
+    registeredAt: row.created_at,
+  };
+}
+
+function parseEnrolledIds(groupConcat) {
+  if (!groupConcat) return [];
+  return groupConcat
+    .split(',')
+    .map((item) => parseIntSafe(item, NaN))
+    .filter((id) => Number.isInteger(id));
+}
+
+const seed = safeReadStoreSeed();
+
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+const db = new DatabaseSync(DB_FILE);
+db.exec('PRAGMA foreign_keys = ON');
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user',
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE
+  );
+
+  CREATE TABLE IF NOT EXISTS courses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title_en TEXT NOT NULL,
+    title_kz TEXT NOT NULL,
+    desc_en TEXT NOT NULL,
+    desc_kz TEXT NOT NULL,
+    category_id INTEGER NOT NULL,
+    hero_type TEXT NOT NULL,
+    img TEXT NOT NULL,
+    video TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
+  );
+
+  CREATE TABLE IF NOT EXISTS enrollments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    course_id INTEGER NOT NULL,
+    enrolled_at TEXT NOT NULL,
+    UNIQUE(user_id, course_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    course_id INTEGER,
+    user_name TEXT NOT NULL,
+    text TEXT NOT NULL,
+    rating INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS quizzes (
+    course_id INTEGER PRIMARY KEY,
+    questions_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    user_name TEXT NOT NULL,
+    course_id INTEGER NOT NULL,
+    score INTEGER NOT NULL,
+    total INTEGER NOT NULL,
+    percentage INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    UNIQUE(user_id, course_id),
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS telemetry (
+    key TEXT PRIMARY KEY,
+    value INTEGER NOT NULL DEFAULT 0
+  );
+`);
+
+const stmtInsertCategory = db.prepare('INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)');
+const stmtSelectCategoryBySlug = db.prepare('SELECT id, slug FROM categories WHERE slug = ?');
+const stmtInsertCourse = db.prepare(`
+  INSERT OR REPLACE INTO courses
+    (id, title_en, title_kz, desc_en, desc_kz, category_id, hero_type, img, video, created_at, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+const stmtInsertQuiz = db.prepare('INSERT OR REPLACE INTO quizzes (course_id, questions_json, updated_at) VALUES (?, ?, ?)');
+const stmtInsertUser = db.prepare(`
+  INSERT OR REPLACE INTO users (id, name, phone, email, password_hash, role, created_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+`);
+const stmtInsertReview = db.prepare(`
+  INSERT INTO reviews (course_id, user_name, text, rating, created_at)
+  VALUES (?, ?, ?, ?, ?)
+`);
+const stmtInsertScore = db.prepare(`
+  INSERT INTO scores (user_id, user_name, course_id, score, total, percentage, date)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+`);
+
+function ensureCategory(slug) {
+  const safeSlug = toSlug(slug) || 'beginner';
+  stmtInsertCategory.run(toCategoryName(safeSlug), safeSlug);
+  const found = stmtSelectCategoryBySlug.get(safeSlug);
+  return found?.id;
+}
+
+function ensureQuizQuestions(questions) {
+  const normalized = Array.isArray(questions) ? [...questions] : [];
+  BONUS_QUESTIONS.forEach((bonus) => {
+    const exists = normalized.some((q) => q?.en === bonus.en);
+    if (!exists) normalized.push({ ...bonus });
   });
+  return normalized;
 }
 
-function replaceArray(target, source, mapper = (item) => item) {
-  target.splice(0, target.length, ...source.map(mapper));
-}
-
-function persistData() {
+function runInTransaction(work) {
+  db.exec('BEGIN');
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-
-    const payload = {
-      users,
-      reviews,
-      scores,
-      courses,
-      quizzes,
-      telemetry,
-      updatedAt: new Date().toISOString(),
-    };
-
-    fs.writeFileSync(DATA_FILE, JSON.stringify(payload, null, 2), 'utf-8');
+    work();
+    db.exec('COMMIT');
   } catch (error) {
-    console.error('Persist error:', error.message);
+    db.exec('ROLLBACK');
+    throw error;
   }
 }
 
-function loadPersistedData() {
-  if (!fs.existsSync(DATA_FILE)) return;
+function seedDatabase() {
+  const now = new Date().toISOString();
 
-  try {
-    const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+  const usersCount = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
+  const coursesCount = db.prepare('SELECT COUNT(*) AS count FROM courses').get().count;
+  const quizzesCount = db.prepare('SELECT COUNT(*) AS count FROM quizzes').get().count;
+  const reviewsCount = db.prepare('SELECT COUNT(*) AS count FROM reviews').get().count;
+  const scoresCount = db.prepare('SELECT COUNT(*) AS count FROM scores').get().count;
 
-    if (Array.isArray(parsed.users)) {
-      users = parsed.users;
-    }
-    if (Array.isArray(parsed.reviews)) {
-      reviews = parsed.reviews;
-    }
-    if (Array.isArray(parsed.scores)) {
-      scores = parsed.scores;
-    }
-    if (Array.isArray(parsed.courses) && parsed.courses.length) {
-      replaceArray(courses, parsed.courses, sanitizeCourse);
-    }
-    if (Array.isArray(parsed.quizzes) && parsed.quizzes.length) {
-      replaceArray(quizzes, parsed.quizzes);
-    }
-    if (parsed.telemetry && typeof parsed.telemetry === 'object') {
-      telemetry = { ...telemetry, ...parsed.telemetry };
-    }
-  } catch (error) {
-    console.error('Load persisted data error:', error.message);
+  if (coursesCount === 0) {
+    const sanitized = seed.courses.map((course, idx) => sanitizeCourseSeed(course, idx));
+    runInTransaction(() => {
+      sanitized.forEach((course) => {
+        const categoryId = ensureCategory(course.category);
+        const createdAt = now;
+
+        stmtInsertCourse.run(
+          course.id,
+          course.en.title,
+          course.kz.title,
+          course.en.desc,
+          course.kz.desc,
+          categoryId,
+          course.heroType,
+          course.img,
+          normalizeYouTubeEmbed(course.video),
+          createdAt,
+          createdAt,
+        );
+      });
+    });
   }
+
+  if (quizzesCount === 0) {
+    runInTransaction(() => {
+      seed.quizzes.forEach((quiz) => {
+        const courseId = parseIntSafe(quiz.courseId, null);
+        if (!courseId) return;
+
+        const courseExists = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
+        if (!courseExists) return;
+
+        const questions = ensureQuizQuestions(quiz.questions);
+        stmtInsertQuiz.run(courseId, JSON.stringify(questions), now);
+      });
+    });
+
+    const missingCourseIds = db
+      .prepare('SELECT c.id FROM courses c LEFT JOIN quizzes q ON q.course_id = c.id WHERE q.course_id IS NULL')
+      .all();
+
+    missingCourseIds.forEach((row) => {
+      stmtInsertQuiz.run(row.id, JSON.stringify(ensureQuizQuestions([])), now);
+    });
+  }
+
+  if (usersCount === 0 && Array.isArray(seed.users) && seed.users.length) {
+    runInTransaction(() => {
+      seed.users.forEach((user) => {
+        const name = cleanText(user.name);
+        const phone = cleanText(user.phone || '+7 700 000 00 00');
+        const email = cleanText(user.email).toLowerCase();
+        if (!name || !isValidEmail(email)) return;
+
+        const rawPassword = cleanText(user.password);
+        const passwordHash = rawPassword.startsWith('$2') ? rawPassword : bcrypt.hashSync(rawPassword || 'Password123!', 10);
+        const role = user.role === 'admin' ? 'admin' : 'user';
+        const createdAt = user.registeredAt || user.createdAt || now;
+
+        stmtInsertUser.run(parseIntSafe(user.id, null), name, phone, email, passwordHash, role, createdAt);
+
+        const enrolled = Array.isArray(user.enrolledCourses) ? user.enrolledCourses : [];
+        enrolled.forEach((courseIdRaw) => {
+          const courseId = parseIntSafe(courseIdRaw, null);
+          if (!courseId) return;
+          db.prepare('INSERT OR IGNORE INTO enrollments (user_id, course_id, enrolled_at) VALUES (?, ?, ?)').run(
+            parseIntSafe(user.id, 0),
+            courseId,
+            now,
+          );
+        });
+      });
+    });
+  }
+
+  const adminEmail = 'admin@jsha.kz';
+  const adminExists = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
+  if (!adminExists) {
+    db.prepare('INSERT INTO users (name, phone, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
+      'Admin User',
+      '+7 700 111 22 33',
+      adminEmail,
+      bcrypt.hashSync('Admin123!', 10),
+      'admin',
+      now,
+    );
+  }
+
+  if (reviewsCount === 0 && Array.isArray(seed.reviews) && seed.reviews.length) {
+    runInTransaction(() => {
+      seed.reviews.forEach((review) => {
+        const courseId = review.courseId ? parseIntSafe(review.courseId, null) : null;
+        const userName = cleanText(review.userName);
+        const text = cleanText(review.text);
+        const rating = Math.max(1, Math.min(5, parseIntSafe(review.rating, 5) || 5));
+        const createdAt = review.createdAt || now;
+
+        if (!userName || !text) return;
+        stmtInsertReview.run(courseId, userName, text, rating, createdAt);
+      });
+    });
+  }
+
+  if (scoresCount === 0 && Array.isArray(seed.scores) && seed.scores.length) {
+    runInTransaction(() => {
+      seed.scores.forEach((scoreRow) => {
+        const userId = parseIntSafe(scoreRow.userId, 0) || 0;
+        const courseId = parseIntSafe(scoreRow.courseId, null);
+        const score = parseIntSafe(scoreRow.score, null);
+        const total = parseIntSafe(scoreRow.total, null);
+        if (!courseId || score === null || !total || total <= 0) return;
+
+        const percentage = Math.round((score / total) * 100);
+        stmtInsertScore.run(
+          userId,
+          cleanText(scoreRow.userName) || 'Guest',
+          courseId,
+          score,
+          total,
+          percentage,
+          scoreRow.date || now,
+        );
+      });
+    });
+  }
+
+  db.prepare('INSERT OR IGNORE INTO telemetry (key, value) VALUES (?, ?)').run('telegramClicks', 0);
+  if (seed.telemetry && Number.isFinite(Number(seed.telemetry.telegramClicks))) {
+    db.prepare('UPDATE telemetry SET value = ? WHERE key = ?').run(Number(seed.telemetry.telegramClicks), 'telegramClicks');
+  }
+}
+
+seedDatabase();
+
+function mapCourseRow(row) {
+  return {
+    id: row.id,
+    en: {
+      title: row.title_en,
+      desc: row.desc_en,
+    },
+    kz: {
+      title: row.title_kz,
+      desc: row.desc_kz,
+    },
+    category: row.category,
+    heroType: row.hero_type,
+    img: row.img,
+    video: row.video,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function extractCoursePayload(body) {
+  return {
+    titleEn: cleanText(body?.en?.title || body?.titleEn),
+    titleKz: cleanText(body?.kz?.title || body?.titleKz),
+    descEn: cleanText(body?.en?.desc || body?.descEn),
+    descKz: cleanText(body?.kz?.desc || body?.descKz),
+    category: toSlug(body?.category || 'beginner') || 'beginner',
+    heroType: cleanText(body?.heroType || 'tech').toLowerCase(),
+    img: cleanText(body?.img),
+    video: normalizeYouTubeEmbed(cleanText(body?.video)),
+  };
+}
+
+function validateCoursePayload(payload) {
+  if (!payload.titleEn || payload.titleEn.length < 2) return 'Title (EN) must be at least 2 characters';
+  if (!payload.titleKz || payload.titleKz.length < 2) return 'Title (KZ) must be at least 2 characters';
+  if (!payload.descEn || payload.descEn.length < 10) return 'Description (EN) must be at least 10 characters';
+  if (!payload.descKz || payload.descKz.length < 10) return 'Description (KZ) must be at least 10 characters';
+  if (!COURSE_LEVELS.has(payload.category)) return 'Category must be beginner/intermediate/advanced';
+  if (!HERO_TYPES.has(payload.heroType)) return 'Hero type must be tech/magic/mutation';
+  if (!payload.img) return 'Image URL is required';
+  if (!payload.video) return 'YouTube URL is required';
+  return '';
+}
+
+function getCourseList({ search = '', page = null, limit = null } = {}) {
+  const where = [];
+  const params = [];
+
+  const q = cleanText(search).toLowerCase();
+  if (q) {
+    where.push('(LOWER(c.title_en) LIKE ? OR LOWER(c.title_kz) LIKE ? OR LOWER(c.desc_en) LIKE ? OR LOWER(c.desc_kz) LIKE ? OR LOWER(cat.slug) LIKE ?)');
+    const like = `%${q}%`;
+    params.push(like, like, like, like, like);
+  }
+
+  let sql = `
+    SELECT
+      c.id,
+      c.title_en,
+      c.title_kz,
+      c.desc_en,
+      c.desc_kz,
+      c.hero_type,
+      c.img,
+      c.video,
+      c.created_at,
+      c.updated_at,
+      cat.slug AS category
+    FROM courses c
+    JOIN categories cat ON cat.id = c.category_id
+  `;
+
+  if (where.length) {
+    sql += ` WHERE ${where.join(' AND ')}`;
+  }
+
+  sql += ' ORDER BY c.id ASC';
+
+  if (Number.isInteger(page) && Number.isInteger(limit) && limit > 0) {
+    sql += ' LIMIT ? OFFSET ?';
+    params.push(limit, (page - 1) * limit);
+  }
+
+  return db.prepare(sql).all(...params).map(mapCourseRow);
+}
+
+function countCourses(search = '') {
+  const q = cleanText(search).toLowerCase();
+  if (!q) {
+    return db.prepare('SELECT COUNT(*) AS count FROM courses').get().count;
+  }
+
+  const like = `%${q}%`;
+  return db
+    .prepare(`
+      SELECT COUNT(*) AS count
+      FROM courses c
+      JOIN categories cat ON cat.id = c.category_id
+      WHERE LOWER(c.title_en) LIKE ? OR LOWER(c.title_kz) LIKE ? OR LOWER(c.desc_en) LIKE ? OR LOWER(c.desc_kz) LIKE ? OR LOWER(cat.slug) LIKE ?
+    `)
+    .get(like, like, like, like, like).count;
 }
 
 function buildAdminOverview() {
-  const enrollmentCount = users.reduce((acc, user) => acc + (user.enrolledCourses?.length || 0), 0);
-  const avgScore = scores.length
-    ? Math.round(scores.reduce((sum, entry) => sum + entry.percentage, 0) / scores.length)
-    : 0;
+  const statsRow = {
+    users: db.prepare('SELECT COUNT(*) AS count FROM users').get().count,
+    courses: db.prepare('SELECT COUNT(*) AS count FROM courses').get().count,
+    scores: db.prepare('SELECT COUNT(*) AS count FROM scores').get().count,
+    reviews: db.prepare('SELECT COUNT(*) AS count FROM reviews').get().count,
+    enrollments: db.prepare('SELECT COUNT(*) AS count FROM enrollments').get().count,
+    avgScore: db.prepare('SELECT COALESCE(ROUND(AVG(percentage)), 0) AS avgScore FROM scores').get().avgScore,
+    telegramClicks: db.prepare('SELECT COALESCE(value, 0) AS value FROM telemetry WHERE key = ?').get('telegramClicks')?.value || 0,
+  };
 
-  const topCoursesMap = {};
-  users.forEach((user) => {
-    (user.enrolledCourses || []).forEach((courseId) => {
-      topCoursesMap[courseId] = (topCoursesMap[courseId] || 0) + 1;
-    });
-  });
+  const topCourses = db
+    .prepare(`
+      SELECT c.id AS courseId, c.title_en AS title, COUNT(e.id) AS enrolled
+      FROM courses c
+      LEFT JOIN enrollments e ON e.course_id = c.id
+      GROUP BY c.id
+      ORDER BY enrolled DESC, c.id ASC
+      LIMIT 5
+    `)
+    .all()
+    .map((row) => ({
+      courseId: row.courseId,
+      title: row.title,
+      enrolled: Number(row.enrolled) || 0,
+    }));
 
-  const topCourses = Object.entries(topCoursesMap)
-    .map(([courseId, enrolled]) => {
-      const course = courses.find((c) => c.id === Number(courseId));
-      return {
-        courseId: Number(courseId),
-        title: course ? course.en.title : `Course ${courseId}`,
-        enrolled,
-      };
-    })
-    .sort((a, b) => b.enrolled - a.enrolled)
-    .slice(0, 5);
-
-  const scorerMap = {};
-  scores.forEach((entry) => {
-    const key = entry.userName || 'Guest';
-    if (!scorerMap[key]) {
-      scorerMap[key] = { userName: key, attempts: 0, totalPercent: 0 };
-    }
-    scorerMap[key].attempts += 1;
-    scorerMap[key].totalPercent += entry.percentage;
-  });
-
-  const topScorers = Object.values(scorerMap)
-    .map((item) => ({
-      userName: item.userName,
-      attempts: item.attempts,
-      avgPercentage: Math.round(item.totalPercent / item.attempts),
-    }))
-    .sort((a, b) => b.avgPercentage - a.avgPercentage)
-    .slice(0, 10);
+  const topScorers = db
+    .prepare(`
+      SELECT user_name AS userName, COUNT(*) AS attempts, ROUND(AVG(percentage)) AS avgPercentage
+      FROM scores
+      GROUP BY user_name
+      ORDER BY avgPercentage DESC, attempts DESC, user_name ASC
+      LIMIT 10
+    `)
+    .all()
+    .map((row) => ({
+      userName: row.userName,
+      attempts: Number(row.attempts) || 0,
+      avgPercentage: Number(row.avgPercentage) || 0,
+    }));
 
   return {
-    stats: {
-      users: users.length,
-      courses: courses.length,
-      scores: scores.length,
-      reviews: reviews.length,
-      enrollments: enrollmentCount,
-      avgScore,
-      telegramClicks: telemetry.telegramClicks || 0,
-    },
+    stats: statsRow,
     topCourses,
     topScorers,
     generatedAt: new Date().toISOString(),
   };
 }
 
-replaceArray(courses, courses, sanitizeCourse);
-loadPersistedData();
-replaceArray(courses, courses, sanitizeCourse);
-ensureBonusQuestions();
-persistData();
- 
-function sanitizeUserResponse(user) {
-  return {
-    id: user.id,
-    name: user.name,
-    phone: user.phone,
-    email: user.email,
-    enrolledCourses: user.enrolledCourses || [],
-    registeredAt: user.registeredAt || user.createdAt || new Date().toISOString(),
-  };
-}
+app.get('/api/users', (req, res) => {
+  const rows = db
+    .prepare(`
+      SELECT
+        u.id,
+        u.name,
+        u.phone,
+        u.email,
+        u.role,
+        u.created_at,
+        COALESCE(GROUP_CONCAT(e.course_id), '') AS enrolled_ids
+      FROM users u
+      LEFT JOIN enrollments e ON e.user_id = u.id
+      GROUP BY u.id
+      ORDER BY u.created_at DESC, u.id DESC
+    `)
+    .all();
 
-app.get('/api/users', (req, res) => res.json(users.map(sanitizeUserResponse)));
+  const users = rows.map((row) => sanitizeUserResponse(row, parseEnrolledIds(row.enrolled_ids)));
+  res.json(users);
+});
 
 app.post('/api/register', (req, res) => {
-  const { name, phone, email, password } = req.body;
-  if (!name || !phone || !email || !password) {
-    return res.status(400).json({ error: 'All fields required' });
-  }
+  const name = cleanText(req.body?.name);
+  const phone = cleanText(req.body?.phone);
+  const email = cleanText(req.body?.email).toLowerCase();
+  const password = String(req.body?.password || '');
 
-  const normalizedEmail = String(email).toLowerCase().trim();
-  if (users.find((u) => String(u.email).toLowerCase() === normalizedEmail)) {
-    return res.status(400).json({ error: 'Email already registered' });
-  }
+  if (!name || name.length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters' });
+  if (!isValidPhone(phone)) return res.status(400).json({ error: 'Invalid phone number' });
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
+  if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
-  const user = {
-    id: Date.now(),
-    name,
-    phone,
-    email: normalizedEmail,
-    password,
-    enrolledCourses: [],
-    registeredAt: new Date().toISOString(),
-  };
-  users.push(user);
-  persistData();
+  const exists = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  if (exists) return res.status(400).json({ error: 'Email already registered' });
 
-  res.json({ success: true, user: { id: user.id, name: user.name, email: user.email } });
+  const createdAt = new Date().toISOString();
+  const passwordHash = bcrypt.hashSync(password, 10);
+
+  const result = db
+    .prepare('INSERT INTO users (name, phone, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(name, phone, email, passwordHash, 'user', createdAt);
+
+  res.json({
+    success: true,
+    user: {
+      id: Number(result.lastInsertRowid),
+      name,
+      email,
+      role: 'user',
+    },
+  });
 });
 
 app.post('/api/login', (req, res) => {
-  const { email, password } = req.body;
-  const normalizedEmail = String(email || '').toLowerCase().trim();
-  const user = users.find((u) => String(u.email).toLowerCase() === normalizedEmail && u.password === password);
-  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-  res.json({ success: true, user: { id: user.id, name: user.name, email: user.email } });
+  const email = cleanText(req.body?.email).toLowerCase();
+  const password = String(req.body?.password || '');
+
+  if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+
+  const row = db.prepare('SELECT id, name, email, role, password_hash FROM users WHERE email = ?').get(email);
+  if (!row) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const ok = bcrypt.compareSync(password, row.password_hash);
+  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+
+  res.json({
+    success: true,
+    user: {
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      role: row.role,
+    },
+  });
 });
 
-app.delete('/api/users/:id', (req, res) => {
-  const id = Number(req.params.id);
-  users = users.filter((u) => u.id !== id);
-  scores = scores.filter((s) => s.userId !== id);
-  persistData();
+app.put('/api/users/:id', (req, res) => {
+  const id = parseIntSafe(req.params.id, null);
+  if (!id) return res.status(400).json({ error: 'Invalid user id' });
+
+  const current = db.prepare('SELECT id, name, phone, role FROM users WHERE id = ?').get(id);
+  if (!current) return res.status(404).json({ error: 'User not found' });
+
+  const name = cleanText(req.body?.name || current.name);
+  const phone = cleanText(req.body?.phone || current.phone);
+  const role = req.body?.role === 'admin' ? 'admin' : 'user';
+
+  if (!name || name.length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters' });
+  if (!isValidPhone(phone)) return res.status(400).json({ error: 'Invalid phone number' });
+
+  db.prepare('UPDATE users SET name = ?, phone = ?, role = ? WHERE id = ?').run(name, phone, role, id);
+
   res.json({ success: true });
 });
 
-app.get('/api/courses', (req, res) => res.json(courses.map(sanitizeCourse)));
+app.delete('/api/users/:id', (req, res) => {
+  const id = parseIntSafe(req.params.id, null);
+  if (!id) return res.status(400).json({ error: 'Invalid user id' });
 
-app.post('/api/courses', (req, res) => {
-  const course = sanitizeCourse({ id: Date.now(), ...req.body });
-  courses.push(course);
+  db.prepare('DELETE FROM scores WHERE user_id = ?').run(id);
+  const result = db.prepare('DELETE FROM users WHERE id = ?').run(id);
 
-  const quizExists = quizzes.some((q) => q.courseId === course.id);
-  if (!quizExists) {
-    quizzes.push({
-      courseId: course.id,
-      questions: [...BONUS_QUESTIONS.map((q) => ({ ...q }))],
+  if (!result.changes) return res.status(404).json({ error: 'User not found' });
+
+  res.json({ success: true });
+});
+
+app.get('/api/courses', (req, res) => {
+  const search = cleanText(req.query.search || '');
+  const page = parseIntSafe(req.query.page, null);
+  const limit = parseIntSafe(req.query.limit, null);
+
+  if (page && limit) {
+    const safeLimit = Math.max(1, Math.min(limit, 50));
+    const safePage = Math.max(1, page);
+    const items = getCourseList({ search, page: safePage, limit: safeLimit });
+    const total = countCourses(search);
+
+    return res.json({
+      items,
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / safeLimit)),
+      },
     });
   }
 
-  persistData();
-  res.json({ success: true, course });
+  const items = getCourseList({ search });
+  return res.json(items);
+});
+
+app.post('/api/courses', (req, res) => {
+  const payload = extractCoursePayload(req.body);
+  const error = validateCoursePayload(payload);
+  if (error) return res.status(400).json({ error });
+
+  const categoryId = ensureCategory(payload.category);
+  const now = new Date().toISOString();
+
+  const result = db
+    .prepare(`
+      INSERT INTO courses
+        (title_en, title_kz, desc_en, desc_kz, category_id, hero_type, img, video, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    .run(
+      payload.titleEn,
+      payload.titleKz,
+      payload.descEn,
+      payload.descKz,
+      categoryId,
+      payload.heroType,
+      payload.img,
+      payload.video,
+      now,
+      now,
+    );
+
+  const courseId = Number(result.lastInsertRowid);
+  const questions = ensureQuizQuestions([]);
+  stmtInsertQuiz.run(courseId, JSON.stringify(questions), now);
+
+  const row = db
+    .prepare(`
+      SELECT c.id, c.title_en, c.title_kz, c.desc_en, c.desc_kz, c.hero_type, c.img, c.video, c.created_at, c.updated_at, cat.slug AS category
+      FROM courses c
+      JOIN categories cat ON cat.id = c.category_id
+      WHERE c.id = ?
+    `)
+    .get(courseId);
+
+  res.json({ success: true, course: mapCourseRow(row) });
+});
+
+app.put('/api/courses/:id', (req, res) => {
+  const courseId = parseIntSafe(req.params.id, null);
+  if (!courseId) return res.status(400).json({ error: 'Invalid course id' });
+
+  const existing = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
+  if (!existing) return res.status(404).json({ error: 'Course not found' });
+
+  const payload = extractCoursePayload(req.body);
+  const error = validateCoursePayload(payload);
+  if (error) return res.status(400).json({ error });
+
+  const categoryId = ensureCategory(payload.category);
+  const now = new Date().toISOString();
+
+  db.prepare(`
+    UPDATE courses
+    SET title_en = ?, title_kz = ?, desc_en = ?, desc_kz = ?, category_id = ?, hero_type = ?, img = ?, video = ?, updated_at = ?
+    WHERE id = ?
+  `).run(
+    payload.titleEn,
+    payload.titleKz,
+    payload.descEn,
+    payload.descKz,
+    categoryId,
+    payload.heroType,
+    payload.img,
+    payload.video,
+    now,
+    courseId,
+  );
+
+  const row = db
+    .prepare(`
+      SELECT c.id, c.title_en, c.title_kz, c.desc_en, c.desc_kz, c.hero_type, c.img, c.video, c.created_at, c.updated_at, cat.slug AS category
+      FROM courses c
+      JOIN categories cat ON cat.id = c.category_id
+      WHERE c.id = ?
+    `)
+    .get(courseId);
+
+  res.json({ success: true, course: mapCourseRow(row) });
 });
 
 app.delete('/api/courses/:id', (req, res) => {
-  const id = Number(req.params.id);
-  const idx = courses.findIndex((c) => c.id === id);
-  if (idx > -1) {
-    courses.splice(idx, 1);
-    const qIdx = quizzes.findIndex((q) => q.courseId === id);
-    if (qIdx > -1) quizzes.splice(qIdx, 1);
-    reviews = reviews.filter((r) => r.courseId !== id);
-    scores = scores.filter((s) => s.courseId !== id);
-    users = users.map((user) => ({
-      ...user,
-      enrolledCourses: (user.enrolledCourses || []).filter((courseId) => courseId !== id),
-    }));
-    persistData();
-  }
+  const courseId = parseIntSafe(req.params.id, null);
+  if (!courseId) return res.status(400).json({ error: 'Invalid course id' });
+
+  const result = db.prepare('DELETE FROM courses WHERE id = ?').run(courseId);
+  if (!result.changes) return res.status(404).json({ error: 'Course not found' });
+
   res.json({ success: true });
 });
 
 app.post('/api/enroll', (req, res) => {
-  const { userId, courseId } = req.body;
-  const user = users.find((u) => u.id === Number(userId));
-  if (!user) return res.status(404).json({ error: 'User not found' });
+  const userId = parseIntSafe(req.body?.userId, null);
+  const courseId = parseIntSafe(req.body?.courseId, null);
 
-  const course = courses.find((c) => c.id === Number(courseId));
-  if (!course) return res.status(404).json({ error: 'Course not found' });
+  if (!userId || !courseId) return res.status(400).json({ error: 'userId and courseId are required' });
 
-  if (!Array.isArray(user.enrolledCourses)) {
-    user.enrolledCourses = [];
-  }
+  const userExists = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+  if (!userExists) return res.status(404).json({ error: 'User not found' });
 
-  if (!user.enrolledCourses.includes(course.id)) {
-    user.enrolledCourses.push(course.id);
-    persistData();
-  }
+  const courseExists = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
+  if (!courseExists) return res.status(404).json({ error: 'Course not found' });
+
+  const now = new Date().toISOString();
+  db.prepare('INSERT OR IGNORE INTO enrollments (user_id, course_id, enrolled_at) VALUES (?, ?, ?)').run(userId, courseId, now);
 
   res.json({ success: true });
 });
 
 app.get('/api/reviews', (req, res) => {
-  const courseId = req.query.courseId ? Number(req.query.courseId) : null;
-  const filtered = courseId ? reviews.filter((r) => r.courseId === courseId) : reviews;
-  res.json(filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)));
+  const courseId = parseIntSafe(req.query.courseId, null);
+
+  const sql = courseId
+    ? 'SELECT id, course_id, user_name, text, rating, created_at FROM reviews WHERE course_id = ? ORDER BY datetime(created_at) ASC, id ASC'
+    : 'SELECT id, course_id, user_name, text, rating, created_at FROM reviews ORDER BY datetime(created_at) ASC, id ASC';
+
+  const rows = courseId ? db.prepare(sql).all(courseId) : db.prepare(sql).all();
+
+  const reviews = rows.map((row) => ({
+    id: row.id,
+    courseId: row.course_id,
+    userName: row.user_name,
+    text: row.text,
+    rating: row.rating,
+    createdAt: row.created_at,
+  }));
+
+  res.json(reviews);
 });
 
 app.post('/api/reviews', (req, res) => {
-  const { courseId, userName, text, rating } = req.body;
-  if (!text || !userName) return res.status(400).json({ error: 'Text and name required' });
+  const courseId = req.body?.courseId ? parseIntSafe(req.body.courseId, null) : null;
+  const userName = cleanText(req.body?.userName);
+  const text = cleanText(req.body?.text);
+  const rating = Math.max(1, Math.min(5, parseIntSafe(req.body?.rating, 5) || 5));
 
-  const review = {
-    id: Date.now(),
-    courseId: courseId || null,
-    userName,
-    text,
-    rating: rating || 5,
-    createdAt: new Date().toISOString(),
-  };
+  if (!userName || userName.length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters' });
+  if (!text || text.length < 10) return res.status(400).json({ error: 'Review text must be at least 10 characters' });
 
-  reviews.push(review);
-  persistData();
-  res.json({ success: true, review });
+  if (courseId) {
+    const courseExists = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
+    if (!courseExists) return res.status(404).json({ error: 'Course not found' });
+  }
+
+  const createdAt = new Date().toISOString();
+  const result = db
+    .prepare('INSERT INTO reviews (course_id, user_name, text, rating, created_at) VALUES (?, ?, ?, ?, ?)')
+    .run(courseId, userName, text, rating, createdAt);
+
+  res.json({
+    success: true,
+    review: {
+      id: Number(result.lastInsertRowid),
+      courseId,
+      userName,
+      text,
+      rating,
+      createdAt,
+    },
+  });
 });
 
-app.get('/api/quizzes', (req, res) => res.json(quizzes));
+app.get('/api/quizzes', (req, res) => {
+  const rows = db.prepare('SELECT course_id, questions_json FROM quizzes ORDER BY course_id ASC').all();
+  const quizzes = rows.map((row) => {
+    let questions = [];
+    try {
+      questions = JSON.parse(row.questions_json);
+    } catch {
+      questions = ensureQuizQuestions([]);
+    }
+    return {
+      courseId: row.course_id,
+      questions,
+    };
+  });
+  res.json(quizzes);
+});
 
 app.get('/api/quizzes/:courseId', (req, res) => {
-  const quiz = quizzes.find((q) => q.courseId === Number(req.params.courseId));
-  if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
-  res.json(quiz);
+  const courseId = parseIntSafe(req.params.courseId, null);
+  if (!courseId) return res.status(400).json({ error: 'Invalid course id' });
+
+  const row = db.prepare('SELECT course_id, questions_json FROM quizzes WHERE course_id = ?').get(courseId);
+  if (!row) return res.status(404).json({ error: 'Quiz not found' });
+
+  let questions = [];
+  try {
+    questions = JSON.parse(row.questions_json);
+  } catch {
+    questions = ensureQuizQuestions([]);
+  }
+
+  res.json({ courseId: row.course_id, questions });
 });
 
 app.get('/api/scores', (req, res) => {
-  const userId = req.query.userId ? Number(req.query.userId) : null;
-  const filtered = userId ? scores.filter((s) => s.userId === userId) : scores;
-  res.json(filtered);
+  const userId = parseIntSafe(req.query.userId, null);
+
+  const sql = userId
+    ? 'SELECT user_id, user_name, course_id, score, total, percentage, date FROM scores WHERE user_id = ? ORDER BY datetime(date) DESC, id DESC'
+    : 'SELECT user_id, user_name, course_id, score, total, percentage, date FROM scores ORDER BY datetime(date) DESC, id DESC';
+
+  const rows = userId ? db.prepare(sql).all(userId) : db.prepare(sql).all();
+
+  const scores = rows.map((row) => ({
+    userId: row.user_id,
+    userName: row.user_name,
+    courseId: row.course_id,
+    score: row.score,
+    total: row.total,
+    percentage: row.percentage,
+    date: row.date,
+  }));
+
+  res.json(scores);
 });
 
 app.post('/api/scores', (req, res) => {
-  const { userId, userName, courseId, score, total } = req.body;
-  const existing = scores.findIndex((s) => s.userId === userId && s.courseId === courseId);
+  const userId = parseIntSafe(req.body?.userId, 0) || 0;
+  const userName = cleanText(req.body?.userName) || 'Guest';
+  const courseId = parseIntSafe(req.body?.courseId, null);
+  const score = parseIntSafe(req.body?.score, null);
+  const total = parseIntSafe(req.body?.total, null);
 
-  const entry = {
-    userId,
-    userName,
-    courseId,
-    score,
-    total,
-    percentage: Math.round((score / total) * 100),
-    date: new Date().toISOString(),
-  };
+  if (!courseId) return res.status(400).json({ error: 'courseId is required' });
+  if (score === null || total === null || total <= 0 || score < 0 || score > total) {
+    return res.status(400).json({ error: 'Invalid score payload' });
+  }
 
-  if (existing > -1) scores[existing] = entry;
-  else scores.push(entry);
+  const courseExists = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
+  if (!courseExists) return res.status(404).json({ error: 'Course not found' });
 
-  persistData();
-  res.json({ success: true, entry });
+  const percentage = Math.round((score / total) * 100);
+  const date = new Date().toISOString();
+
+  db.prepare(`
+    INSERT INTO scores (user_id, user_name, course_id, score, total, percentage, date)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(user_id, course_id)
+    DO UPDATE SET
+      user_name = excluded.user_name,
+      score = excluded.score,
+      total = excluded.total,
+      percentage = excluded.percentage,
+      date = excluded.date
+  `).run(userId, userName, courseId, score, total, percentage, date);
+
+  res.json({
+    success: true,
+    entry: {
+      userId,
+      userName,
+      courseId,
+      score,
+      total,
+      percentage,
+      date,
+    },
+  });
 });
 
 app.post('/api/telemetry/telegram-click', (req, res) => {
-  telemetry.telegramClicks = Number(telemetry.telegramClicks || 0) + 1;
-  persistData();
-  res.json({ success: true, telegramClicks: telemetry.telegramClicks });
+  db.prepare('UPDATE telemetry SET value = value + 1 WHERE key = ?').run('telegramClicks');
+  const row = db.prepare('SELECT value FROM telemetry WHERE key = ?').get('telegramClicks');
+  res.json({ success: true, telegramClicks: row?.value || 0 });
 });
 
 app.get('/api/admin/overview', (req, res) => {
@@ -549,28 +1046,48 @@ app.get('/api/admin/overview', (req, res) => {
 
 app.get('/api/export/users', async (req, res) => {
   try {
+    const users = db
+      .prepare(`
+        SELECT
+          u.id,
+          u.name,
+          u.phone,
+          u.email,
+          u.role,
+          u.created_at,
+          COALESCE(GROUP_CONCAT(e.course_id), '') AS enrolled_ids
+        FROM users u
+        LEFT JOIN enrollments e ON e.user_id = u.id
+        GROUP BY u.id
+        ORDER BY u.created_at DESC, u.id DESC
+      `)
+      .all();
+
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Users');
 
     sheet.columns = [
-      { header: 'ID', key: 'id', width: 16 },
+      { header: 'ID', key: 'id', width: 14 },
       { header: 'Name', key: 'name', width: 25 },
       { header: 'Phone', key: 'phone', width: 20 },
       { header: 'Email', key: 'email', width: 30 },
+      { header: 'Role', key: 'role', width: 14 },
       { header: 'Registered', key: 'registeredAt', width: 28 },
-      { header: 'Enrolled Count', key: 'enrolled', width: 16 },
+      { header: 'Enrolled Count', key: 'enrolledCount', width: 16 },
       { header: 'Enrolled IDs', key: 'enrolledIds', width: 30 },
     ];
 
-    users.forEach((u) => {
+    users.forEach((row) => {
+      const enrolled = parseEnrolledIds(row.enrolled_ids);
       sheet.addRow({
-        id: u.id,
-        name: u.name,
-        phone: u.phone,
-        email: u.email,
-        registeredAt: u.registeredAt || u.createdAt,
-        enrolled: (u.enrolledCourses || []).length,
-        enrolledIds: (u.enrolledCourses || []).join(', '),
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        email: row.email,
+        role: row.role,
+        registeredAt: row.created_at,
+        enrolledCount: enrolled.length,
+        enrolledIds: enrolled.join(', '),
       });
     });
 
@@ -579,7 +1096,7 @@ app.get('/api/export/users', async (req, res) => {
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
-    console.error('Export users error:', error);
+    console.error('Export users error:', error.message);
     res.status(500).json({ error: 'Failed to export users' });
   }
 });
@@ -588,66 +1105,154 @@ app.get('/api/export/full-report', async (req, res) => {
   try {
     const workbook = new ExcelJS.Workbook();
 
+    const users = db
+      .prepare(`
+        SELECT
+          u.id,
+          u.name,
+          u.phone,
+          u.email,
+          u.role,
+          u.created_at,
+          COALESCE(GROUP_CONCAT(e.course_id), '') AS enrolled_ids
+        FROM users u
+        LEFT JOIN enrollments e ON e.user_id = u.id
+        GROUP BY u.id
+        ORDER BY u.created_at DESC, u.id DESC
+      `)
+      .all();
+
     const usersSheet = workbook.addWorksheet('Users');
     usersSheet.columns = [
-      { header: 'ID', key: 'id', width: 16 },
+      { header: 'ID', key: 'id', width: 14 },
       { header: 'Name', key: 'name', width: 25 },
       { header: 'Phone', key: 'phone', width: 20 },
       { header: 'Email', key: 'email', width: 30 },
+      { header: 'Role', key: 'role', width: 14 },
       { header: 'Registered', key: 'registeredAt', width: 28 },
-      { header: 'Enrolled IDs', key: 'enrolledCourses', width: 30 },
+      { header: 'Enrolled IDs', key: 'enrolledIds', width: 30 },
     ];
-    users.forEach((u) => usersSheet.addRow({ ...u, enrolledCourses: (u.enrolledCourses || []).join(', ') }));
+
+    users.forEach((row) => {
+      usersSheet.addRow({
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        email: row.email,
+        role: row.role,
+        registeredAt: row.created_at,
+        enrolledIds: parseEnrolledIds(row.enrolled_ids).join(', '),
+      });
+    });
+
+    const courses = db
+      .prepare(`
+        SELECT
+          c.id,
+          c.title_en,
+          c.title_kz,
+          c.desc_en,
+          c.desc_kz,
+          c.hero_type,
+          c.img,
+          c.video,
+          cat.slug AS category,
+          c.created_at,
+          c.updated_at
+        FROM courses c
+        JOIN categories cat ON cat.id = c.category_id
+        ORDER BY c.id ASC
+      `)
+      .all();
 
     const coursesSheet = workbook.addWorksheet('Courses');
     coursesSheet.columns = [
-      { header: 'ID', key: 'id', width: 14 },
-      { header: 'Title EN', key: 'titleEn', width: 35 },
-      { header: 'Title KZ', key: 'titleKz', width: 35 },
+      { header: 'ID', key: 'id', width: 12 },
+      { header: 'Title EN', key: 'titleEn', width: 34 },
+      { header: 'Title KZ', key: 'titleKz', width: 34 },
+      { header: 'Desc EN', key: 'descEn', width: 50 },
+      { header: 'Desc KZ', key: 'descKz', width: 50 },
       { header: 'Category', key: 'category', width: 16 },
       { header: 'Hero Type', key: 'heroType', width: 16 },
       { header: 'Video', key: 'video', width: 50 },
+      { header: 'Created', key: 'createdAt', width: 28 },
+      { header: 'Updated', key: 'updatedAt', width: 28 },
     ];
-    courses.forEach((c) =>
+
+    courses.forEach((row) => {
       coursesSheet.addRow({
-        id: c.id,
-        titleEn: c.en.title,
-        titleKz: c.kz.title,
-        category: c.category,
-        heroType: c.heroType,
-        video: c.video,
-      }),
-    );
+        id: row.id,
+        titleEn: row.title_en,
+        titleKz: row.title_kz,
+        descEn: row.desc_en,
+        descKz: row.desc_kz,
+        category: row.category,
+        heroType: row.hero_type,
+        video: row.video,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      });
+    });
+
+    const scores = db
+      .prepare('SELECT user_id, user_name, course_id, score, total, percentage, date FROM scores ORDER BY datetime(date) DESC, id DESC')
+      .all();
 
     const scoresSheet = workbook.addWorksheet('Scores');
     scoresSheet.columns = [
-      { header: 'User ID', key: 'userId', width: 14 },
+      { header: 'User ID', key: 'userId', width: 12 },
       { header: 'User', key: 'userName', width: 24 },
-      { header: 'Course ID', key: 'courseId', width: 14 },
+      { header: 'Course ID', key: 'courseId', width: 12 },
       { header: 'Score', key: 'score', width: 10 },
       { header: 'Total', key: 'total', width: 10 },
       { header: 'Percentage', key: 'percentage', width: 12 },
       { header: 'Date', key: 'date', width: 28 },
     ];
-    scores.forEach((s) => scoresSheet.addRow(s));
+
+    scores.forEach((row) => {
+      scoresSheet.addRow({
+        userId: row.user_id,
+        userName: row.user_name,
+        courseId: row.course_id,
+        score: row.score,
+        total: row.total,
+        percentage: row.percentage,
+        date: row.date,
+      });
+    });
+
+    const reviews = db
+      .prepare('SELECT id, course_id, user_name, rating, text, created_at FROM reviews ORDER BY datetime(created_at) DESC, id DESC')
+      .all();
 
     const reviewsSheet = workbook.addWorksheet('Reviews');
     reviewsSheet.columns = [
-      { header: 'ID', key: 'id', width: 16 },
-      { header: 'Course ID', key: 'courseId', width: 14 },
+      { header: 'ID', key: 'id', width: 14 },
+      { header: 'Course ID', key: 'courseId', width: 12 },
       { header: 'User', key: 'userName', width: 24 },
       { header: 'Rating', key: 'rating', width: 10 },
       { header: 'Text', key: 'text', width: 60 },
       { header: 'Created At', key: 'createdAt', width: 28 },
     ];
-    reviews.forEach((r) => reviewsSheet.addRow(r));
+
+    reviews.forEach((row) => {
+      reviewsSheet.addRow({
+        id: row.id,
+        courseId: row.course_id,
+        userName: row.user_name,
+        rating: row.rating,
+        text: row.text,
+        createdAt: row.created_at,
+      });
+    });
 
     const analyticsSheet = workbook.addWorksheet('Analytics');
-    const overview = buildAdminOverview();
     analyticsSheet.columns = [
       { header: 'Metric', key: 'metric', width: 25 },
       { header: 'Value', key: 'value', width: 20 },
     ];
+
+    const overview = buildAdminOverview();
     Object.entries(overview.stats).forEach(([metric, value]) => {
       analyticsSheet.addRow({ metric, value });
     });
@@ -657,7 +1262,7 @@ app.get('/api/export/full-report', async (req, res) => {
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
-    console.error('Export full report error:', error);
+    console.error('Export full report error:', error.message);
     res.status(500).json({ error: 'Failed to export full report' });
   }
 });
@@ -681,9 +1286,9 @@ app.listen(PORT, () => {
   console.log(`JS Heroes Academy running at http://localhost:${PORT}`);
 
   try {
-    const { startBot } = require('./bot.js');  
+    const { startBot } = require('./bot.js');
     startBot();
-  } catch (err) {
-    console.error("Ботты жүктеу қатесі:", err);
+  } catch (error) {
+    console.error('Bot load error:', error.message);
   }
 });

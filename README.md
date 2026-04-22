@@ -1,6 +1,6 @@
 # JS Heroes Academy (React + Express)
 
-Толық жоба енді React SPA форматында жұмыс істейді, ал backend Express API арқылы деректерді тұрақты сақтайды.
+Толық жоба енді React SPA форматында жұмыс істейді, ал backend Express API + SQLite деректер базасы арқылы деректерді тұрақты сақтайды.
 
 ## Негізгі жаңартулар
 
@@ -11,8 +11,12 @@
   - Users/Courses/Scores/Analytics табтары
   - Full Excel report экспорты
   - Analytics JSON экспорты
-- Пайдаланушылар, курстар, пікірлер, баллдар серверде `data/store.json` ішінде сақталады
+- Негізгі деректер SQLite ішінде сақталады: `data/lab6.sqlite`
+- `data/store.json` тек бастапқы seed көзі ретінде қолданылады (алғашқы толтыруға)
 - YouTube видеолар normalize жасалып (`youtube-nocookie embed`) тұрақтандырылды
+- Парольдер `bcrypt` арқылы хэштеледі
+- CRUD API толықтырылды (`GET / POST / PUT / DELETE`)
+- Модельдер мен байланыстар енгізілді: `users`, `categories`, `courses`, `enrollments` (+ `reviews`, `scores`, `quizzes`)
 
 ## Іске қосу
 
@@ -43,8 +47,13 @@ npm run server
 
 ## Деректер сақтау
 
-- Persistence файлы: `data/store.json`
-- Бұл файлда users/reviews/scores/courses/quizzes/telemetry сақталады
+- Негізгі деректер базасы: `data/lab6.sqlite`
+- Seed көзі: `data/store.json`
+
+## Admin Test Account
+
+- Email: `admin@jsha.kz`
+- Password: `Admin123!`
 
 ## Telegram
 

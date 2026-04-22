@@ -19,7 +19,8 @@
       "email": "thebest@icloud.com",
       "password": "0987654321",
       "enrolledCourses": [
-        20
+        20,
+        2
       ],
       "registeredAt": "2026-04-21T09:06:46.440Z"
     }
@@ -1797,5 +1798,5 @@
   "telemetry": {
     "telegramClicks": 7
   },
-  "updatedAt": "2026-04-21T09:09:29.113Z"
+  "updatedAt": "2026-04-21T09:25:23.718Z"
 }

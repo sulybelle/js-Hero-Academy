@@ -5,6 +5,8 @@ import { api } from '../lib/api';
 import { getEnrolledIds, setEnrolledIds } from '../lib/storage';
 import AppLink from '../components/AppLink';
 
+const PAGE_SIZE = 6;
+
 export default function CoursesPage() {
   const { lang, user, showToast, toggleLike, isLiked, saveProgress } = useApp();
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ export default function CoursesPage() {
   const [filterDiff, setFilterDiff] = useState('all');
   const [filterHero, setFilterHero] = useState('all');
   const [sort, setSort] = useState('default');
+  const [page, setPage] = useState(1);
   const [modalCourse, setModalCourse] = useState(null);
 
   useEffect(() => {
@@ -70,6 +73,17 @@ export default function CoursesPage() {
 
     return list;
   }, [allCourses, query, filterDiff, filterHero, sort, lang]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, filterDiff, filterHero, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedCourses = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, currentPage]);
 
   const enrollCourse = async (courseId, title) => {
     if (!user) {
@@ -213,7 +227,7 @@ export default function CoursesPage() {
         )}
 
         {!loading &&
-          filtered.map((course) => {
+          pagedCourses.map((course) => {
             const title = lang === 'kz' ? course.kz.title : course.en.title;
             const desc = lang === 'kz' ? course.kz.desc : course.en.desc;
 
@@ -256,6 +270,30 @@ export default function CoursesPage() {
             );
           })}
       </div>
+
+      {!loading && filtered.length > PAGE_SIZE && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px', flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage <= 1}
+          >
+            {lang === 'kz' ? '← Алдыңғы' : '← Prev'}
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            {lang === 'kz' ? 'Бет' : 'Page'} {currentPage} / {totalPages}
+          </div>
+
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+            disabled={currentPage >= totalPages}
+          >
+            {lang === 'kz' ? 'Келесі →' : 'Next →'}
+          </button>
+        </div>
+      )}
 
       {modalCourse && (
         <div className="modal-overlay active" id="courseModal" onClick={() => setModalCourse(null)}>

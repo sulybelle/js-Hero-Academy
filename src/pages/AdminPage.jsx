@@ -25,10 +25,12 @@ export default function AdminPage() {
 
   const [courseForm, setCourseForm] = useState(EMPTY_COURSE);
   const [courseErrors, setCourseErrors] = useState({});
+  const [editingCourseId, setEditingCourseId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   async function loadAll() {
     setLoading(true);
@@ -60,25 +62,61 @@ export default function AdminPage() {
     return overview.topScorers;
   }, [overview]);
 
+  const resetCourseModal = () => {
+    setModalOpen(false);
+    setEditingCourseId(null);
+    setCourseForm(EMPTY_COURSE);
+    setCourseErrors({});
+  };
+
+  const openCreateCourseModal = () => {
+    setEditingCourseId(null);
+    setCourseForm(EMPTY_COURSE);
+    setCourseErrors({});
+    setModalOpen(true);
+  };
+
+  const openEditCourseModal = (course) => {
+    setEditingCourseId(course.id);
+    setCourseForm({
+      titleEn: course.en?.title || '',
+      titleKz: course.kz?.title || '',
+      descEn: course.en?.desc || '',
+      descKz: course.kz?.desc || '',
+      category: course.category || 'beginner',
+      heroType: course.heroType || 'tech',
+      img: course.img || '',
+      video: course.video || '',
+    });
+    setCourseErrors({});
+    setModalOpen(true);
+  };
+
   const deleteUser = async (id) => {
     if (!window.confirm(lang === 'kz' ? 'Пайдаланушыны өшіреміз бе?' : 'Delete user?')) return;
+    setActionLoading(true);
     try {
       await api.deleteUser(id);
       showToast(lang === 'kz' ? 'Пайдаланушы өшірілді' : 'User deleted', 'success');
       await loadAll();
     } catch (error) {
       showToast(error.message, 'error');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const deleteCourse = async (id) => {
     if (!window.confirm(lang === 'kz' ? 'Курсты өшіреміз бе?' : 'Delete course?')) return;
+    setActionLoading(true);
     try {
       await api.deleteCourse(id);
       showToast(lang === 'kz' ? 'Курс өшірілді' : 'Course deleted', 'success');
       await loadAll();
     } catch (error) {
       showToast(error.message, 'error');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -99,29 +137,38 @@ export default function AdminPage() {
       return;
     }
 
-    try {
-      await api.addCourse({
-        en: {
-          title: courseForm.titleEn.trim(),
-          desc: courseForm.descEn.trim(),
-        },
-        kz: {
-          title: courseForm.titleKz.trim(),
-          desc: courseForm.descKz.trim(),
-        },
-        category: courseForm.category,
-        heroType: courseForm.heroType,
-        img: courseForm.img.trim(),
-        video: courseForm.video.trim(),
-      });
+    setActionLoading(true);
 
-      setModalOpen(false);
-      setCourseForm(EMPTY_COURSE);
-      setCourseErrors({});
-      showToast(lang === 'kz' ? 'Курс қосылды' : 'Course added', 'success');
+    const payload = {
+      en: {
+        title: courseForm.titleEn.trim(),
+        desc: courseForm.descEn.trim(),
+      },
+      kz: {
+        title: courseForm.titleKz.trim(),
+        desc: courseForm.descKz.trim(),
+      },
+      category: courseForm.category,
+      heroType: courseForm.heroType,
+      img: courseForm.img.trim(),
+      video: courseForm.video.trim(),
+    };
+
+    try {
+      if (editingCourseId) {
+        await api.updateCourse(editingCourseId, payload);
+        showToast(lang === 'kz' ? 'Курс жаңартылды' : 'Course updated', 'success');
+      } else {
+        await api.addCourse(payload);
+        showToast(lang === 'kz' ? 'Курс қосылды' : 'Course added', 'success');
+      }
+
+      resetCourseModal();
       await loadAll();
     } catch (error) {
       showToast(error.message, 'error');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -144,10 +191,8 @@ export default function AdminPage() {
             </a>
             <button
               className="btn btn-primary btn-sm"
-              onClick={() => {
-                setCourseErrors({});
-                setModalOpen(true);
-              }}
+              onClick={openCreateCourseModal}
+              disabled={actionLoading}
             >
               + {lang === 'kz' ? 'Курс қосу' : 'Add Course'}
             </button>
@@ -212,7 +257,7 @@ export default function AdminPage() {
                       <button className="btn btn-sm btn-secondary" onClick={() => setSelectedUser(u)}>
                         View
                       </button>{' '}
-                      <button className="btn btn-sm btn-danger" onClick={() => deleteUser(u.id)}>
+                      <button className="btn btn-sm btn-danger" onClick={() => deleteUser(u.id)} disabled={actionLoading}>
                         Delete
                       </button>
                     </td>
@@ -254,7 +299,10 @@ export default function AdminPage() {
                       <span className={`tag tag-${c.heroType}`}>{c.heroType}</span>
                     </td>
                     <td>
-                      <button className="btn btn-sm btn-danger" onClick={() => deleteCourse(c.id)}>
+                      <button className="btn btn-sm btn-secondary" onClick={() => openEditCourseModal(c)} disabled={actionLoading}>
+                        Edit
+                      </button>{' '}
+                      <button className="btn btn-sm btn-danger" onClick={() => deleteCourse(c.id)} disabled={actionLoading}>
                         Delete
                       </button>
                     </td>
@@ -352,14 +400,11 @@ export default function AdminPage() {
         <div
           className="modal-overlay active"
           id="addModal"
-          onClick={() => {
-            setModalOpen(false);
-            setCourseErrors({});
-          }}
+          onClick={resetCourseModal}
         >
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>
-              ADD <span>COURSE</span>
+              {editingCourseId ? 'EDIT ' : 'ADD '}<span>COURSE</span>
             </h3>
             <form id="addForm" onSubmit={submitCourse}>
               <div className="form-group">
@@ -469,17 +514,25 @@ export default function AdminPage() {
                 <span className="field-error">{courseErrors.video || ''}</span>
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                  {lang === 'kz' ? 'Қосу' : 'Add'}
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={actionLoading}>
+                  {actionLoading
+                    ? lang === 'kz'
+                      ? 'Жүктелуде...'
+                      : 'Saving...'
+                    : editingCourseId
+                      ? lang === 'kz'
+                        ? 'Сақтау'
+                        : 'Save'
+                      : lang === 'kz'
+                        ? 'Қосу'
+                        : 'Add'}
                 </button>
                 <button
                   type="button"
                   className="btn btn-secondary"
                   style={{ flex: 1 }}
-                  onClick={() => {
-                    setModalOpen(false);
-                    setCourseErrors({});
-                  }}
+                  onClick={resetCourseModal}
+                  disabled={actionLoading}
                 >
                   {lang === 'kz' ? 'Бас тарту' : 'Cancel'}
                 </button>

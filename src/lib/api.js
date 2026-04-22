@@ -26,6 +26,7 @@ export const api = {
 
   getCourses: () => request('/api/courses'),
   addCourse: (payload) => request('/api/courses', { method: 'POST', body: JSON.stringify(payload) }),
+  updateCourse: (id, payload) => request(`/api/courses/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deleteCourse: (id) => request(`/api/courses/${id}`, { method: 'DELETE' }),
   enroll: (payload) => request('/api/enroll', { method: 'POST', body: JSON.stringify(payload) }),
 
