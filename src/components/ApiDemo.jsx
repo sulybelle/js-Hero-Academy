@@ -1,15 +1,9 @@
-/**
- * API Demo Component
- * Lab 6: HTTP Requests Demo - Shows usage of useFetch and useApi hooks
- */
-
 import { useState } from 'react';
 import { useFetch, useApi } from '../hooks';
 import SpinnerOverlay from './SpinnerOverlay';
 
 export default function ApiDemo() {
-  // Example 1: Using useFetch for simple data fetching
-  const {
+   const {
     data: courses,
     loading: coursesLoading,
     error: coursesError,
@@ -24,7 +18,6 @@ export default function ApiDemo() {
     { retryCount: 2, retryDelay: 1000 }
   );
 
-  // Example 2: Using useApi with caching
   const api = useApi();
   const [selectedCourse, setSelectedCourse] = useState(null);
 
@@ -38,7 +31,6 @@ export default function ApiDemo() {
     <div className="api-demo">
       <h2>Lab 6: HTTP Requests Demo</h2>
 
-      {/* Section 1: useFetch Demo */}
       <section className="demo-section">
         <h3>1. useFetch Hook with Retry</h3>
         <p>Fetches courses with automatic retry on failure (2 retries)</p>
@@ -64,7 +56,6 @@ export default function ApiDemo() {
         )}
       </section>
 
-      {/* Section 2: useApi Demo */}
       <section className="demo-section">
         <h3>2. useApi Hook with Caching</h3>
         <p>API methods with built-in caching and deduplication</p>
@@ -99,7 +90,6 @@ export default function ApiDemo() {
         )}
       </section>
 
-      {/* Section 3: Async/Await Pattern */}
       <section className="demo-section">
         <h3>3. Async/Await Pattern</h3>
         <pre className="code-block">

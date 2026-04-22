@@ -17,8 +17,7 @@ export default function Breadcrumbs() {
 
   const pathnames = location.pathname.split('/').filter((x) => x);
 
-  // Don't show breadcrumbs on home page
-  if (pathnames.length === 0) {
+   if (pathnames.length === 0) {
     return null;
   }
 
@@ -28,14 +27,12 @@ export default function Breadcrumbs() {
   pathnames.forEach((name, index) => {
     currentPath += `/${name}`;
     
-    // Check if it's a dynamic route (numeric ID)
-    const isNumericId = /^\d+$/.test(name);
+     const isNumericId = /^\d+$/.test(name);
     const isLast = index === pathnames.length - 1;
     
     let label;
     if (isNumericId) {
-      // For course details, show "Course #ID"
-      label = lang === 'kz' ? `Курс #${name}` : `Course #${name}`;
+       label = lang === 'kz' ? `Курс #${name}` : `Course #${name}`;
     } else {
       label = ROUTE_NAMES[currentPath]?.[lang] || name.charAt(0).toUpperCase() + name.slice(1);
     }
