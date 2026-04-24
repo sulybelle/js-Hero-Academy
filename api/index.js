@@ -1,15 +1,17 @@
 const express = require('express');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 const ExcelJS = require('exceljs');
 const bcrypt = require('bcryptjs');
-const { DatabaseSync } = require('node:sqlite');
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 
+app.use(express.json({ limit: '1mb' }));
+
 const DATA_DIR = path.join(process.cwd(), 'api', 'data');
 const STORE_FILE = path.join(DATA_DIR, 'store.json');
-const DB_FILE = path.join(DATA_DIR, 'lab6.sqlite');
+const DB_FILE = process.env.VERCEL ? path.join('/tmp', 'lab6.sqlite') : path.join(DATA_DIR, 'lab6.sqlite');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+?[\d\s\-()]{10,20}$/;
@@ -62,10 +64,84 @@ const DEFAULT_SEED = {
   telemetry: { telegramClicks: 0 },
 };
 
-app.use(express.json({ limit: '1mb' }));
-app.use(express.static(PUBLIC_DIR));
-if (fs.existsSync(DIST_DIR)) {
-  app.use(express.static(DIST_DIR));
+if (!fs.existsSync(path.dirname(DB_FILE))) {
+  fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
+}
+
+const db = new sqlite3.Database(DB_FILE);
+
+function dbExec(sql) {
+  return new Promise((resolve, reject) => {
+    db.exec(sql, (err) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
+}
+
+function dbRun(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function runCallback(err) {
+      if (err) return reject(err);
+      resolve({ changes: this.changes || 0, lastID: this.lastID || 0 });
+    });
+  });
+}
+
+function dbGet(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) return reject(err);
+      resolve(row || null);
+    });
+  });
+}
+
+function dbAll(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows || []);
+    });
+  });
+}
+
+function cleanText(value) {
+  return String(value || '').trim();
+}
+
+function parseIntSafe(value, fallback = null) {
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isInteger(parsed) ? parsed : fallback;
+}
+
+function isValidEmail(value) {
+  return EMAIL_RE.test(value);
+}
+
+function isValidPhone(value) {
+  return PHONE_RE.test(value);
+}
+
+function toSlug(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+function toCategoryName(slug) {
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+
+function parseEnrolledIds(groupConcat) {
+  if (!groupConcat) return [];
+  return groupConcat
+    .split(',')
+    .map((item) => parseIntSafe(item, NaN))
+    .filter((id) => Number.isInteger(id));
 }
 
 function normalizeYouTubeEmbed(url) {
@@ -86,7 +162,7 @@ function normalizeYouTubeEmbed(url) {
         videoId = parsed.pathname.split('/shorts/')[1]?.split('/')[0] || '';
       }
     } else if (host === 'youtu.be') {
-      videoId = parsed.pathname.replace('/', '').split('/')[0];
+      videoId = parsed.pathname.replace('/', '').split('/')[0] || '';
     }
 
     if (videoId) {
@@ -106,11 +182,20 @@ function safeReadStoreSeed() {
     const parsed = JSON.parse(fs.readFileSync(STORE_FILE, 'utf-8'));
     return {
       users: Array.isArray(parsed.users) ? parsed.users : DEFAULT_SEED.users,
-      courses: Array.isArray(parsed.courses) && parsed.courses.length ? parsed.courses : DEFAULT_SEED.courses,
-      quizzes: Array.isArray(parsed.quizzes) && parsed.quizzes.length ? parsed.quizzes : DEFAULT_SEED.quizzes,
+      courses:
+        Array.isArray(parsed.courses) && parsed.courses.length
+          ? parsed.courses
+          : DEFAULT_SEED.courses,
+      quizzes:
+        Array.isArray(parsed.quizzes) && parsed.quizzes.length
+          ? parsed.quizzes
+          : DEFAULT_SEED.quizzes,
       reviews: Array.isArray(parsed.reviews) ? parsed.reviews : DEFAULT_SEED.reviews,
       scores: Array.isArray(parsed.scores) ? parsed.scores : DEFAULT_SEED.scores,
-      telemetry: parsed.telemetry && typeof parsed.telemetry === 'object' ? parsed.telemetry : DEFAULT_SEED.telemetry,
+      telemetry:
+        parsed.telemetry && typeof parsed.telemetry === 'object'
+          ? parsed.telemetry
+          : DEFAULT_SEED.telemetry,
     };
   } catch (error) {
     console.error('Failed to read store seed:', error.message);
@@ -120,10 +205,13 @@ function safeReadStoreSeed() {
 
 function sanitizeCourseSeed(raw, idx = 0) {
   const id = Number(raw?.id) || idx + 1;
-  const fallbackImg = 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop';
+  const fallbackImg =
+    'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop';
+
   const category = COURSE_LEVELS.has(String(raw?.category || '').toLowerCase())
     ? String(raw.category).toLowerCase()
     : 'beginner';
+
   const heroType = HERO_TYPES.has(String(raw?.heroType || '').toLowerCase())
     ? String(raw.heroType).toLowerCase()
     : 'tech';
@@ -131,183 +219,18 @@ function sanitizeCourseSeed(raw, idx = 0) {
   return {
     id,
     en: {
-      title: String(raw?.en?.title || `Course ${id}`).trim(),
-      desc: String(raw?.en?.desc || 'JavaScript learning module.').trim(),
+      title: cleanText(raw?.en?.title || `Course ${id}`),
+      desc: cleanText(raw?.en?.desc || 'JavaScript learning module.'),
     },
     kz: {
-      title: String(raw?.kz?.title || `Kurs ${id}`).trim(),
-      desc: String(raw?.kz?.desc || 'JavaScript oqu moduli.').trim(),
+      title: cleanText(raw?.kz?.title || `Kurs ${id}`),
+      desc: cleanText(raw?.kz?.desc || 'JavaScript oqu moduli.'),
     },
     category,
     heroType,
+    img: cleanText(raw?.img || fallbackImg),
     video: normalizeYouTubeEmbed(raw?.video),
-    img: String(raw?.img || fallbackImg).trim(),
   };
-}
-
-function toSlug(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
-
-function toCategoryName(slug) {
-  return slug.charAt(0).toUpperCase() + slug.slice(1);
-}
-
-function parseIntSafe(value, fallback = null) {
-  const parsed = Number.parseInt(String(value), 10);
-  return Number.isInteger(parsed) ? parsed : fallback;
-}
-
-function cleanText(value) {
-  return String(value || '').trim();
-}
-
-function isValidEmail(value) {
-  return EMAIL_RE.test(value);
-}
-
-function isValidPhone(value) {
-  return PHONE_RE.test(value);
-}
-
-function sanitizeUserResponse(row, enrolledIds = []) {
-  return {
-    id: row.id,
-    name: row.name,
-    phone: row.phone,
-    email: row.email,
-    role: row.role,
-    enrolledCourses: enrolledIds,
-    registeredAt: row.created_at,
-  };
-}
-
-function parseEnrolledIds(groupConcat) {
-  if (!groupConcat) return [];
-  return groupConcat
-    .split(',')
-    .map((item) => parseIntSafe(item, NaN))
-    .filter((id) => Number.isInteger(id));
-}
-
-const seed = safeReadStoreSeed();
-
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-const db = new DatabaseSync(DB_FILE);
-db.exec('PRAGMA foreign_keys = ON');
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'user',
-    created_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    slug TEXT NOT NULL UNIQUE
-  );
-
-  CREATE TABLE IF NOT EXISTS courses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title_en TEXT NOT NULL,
-    title_kz TEXT NOT NULL,
-    desc_en TEXT NOT NULL,
-    desc_kz TEXT NOT NULL,
-    category_id INTEGER NOT NULL,
-    hero_type TEXT NOT NULL,
-    img TEXT NOT NULL,
-    video TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
-  );
-
-  CREATE TABLE IF NOT EXISTS enrollments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    course_id INTEGER NOT NULL,
-    enrolled_at TEXT NOT NULL,
-    UNIQUE(user_id, course_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS reviews (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    course_id INTEGER,
-    user_name TEXT NOT NULL,
-    text TEXT NOT NULL,
-    rating INTEGER NOT NULL,
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS quizzes (
-    course_id INTEGER PRIMARY KEY,
-    questions_json TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS scores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    user_name TEXT NOT NULL,
-    course_id INTEGER NOT NULL,
-    score INTEGER NOT NULL,
-    total INTEGER NOT NULL,
-    percentage INTEGER NOT NULL,
-    date TEXT NOT NULL,
-    UNIQUE(user_id, course_id),
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS telemetry (
-    key TEXT PRIMARY KEY,
-    value INTEGER NOT NULL DEFAULT 0
-  );
-`);
-
-const stmtInsertCategory = db.prepare('INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)');
-const stmtSelectCategoryBySlug = db.prepare('SELECT id, slug FROM categories WHERE slug = ?');
-const stmtInsertCourse = db.prepare(`
-  INSERT OR REPLACE INTO courses
-    (id, title_en, title_kz, desc_en, desc_kz, category_id, hero_type, img, video, created_at, updated_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
-const stmtInsertQuiz = db.prepare('INSERT OR REPLACE INTO quizzes (course_id, questions_json, updated_at) VALUES (?, ?, ?)');
-const stmtInsertUser = db.prepare(`
-  INSERT OR REPLACE INTO users (id, name, phone, email, password_hash, role, created_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
-`);
-const stmtInsertReview = db.prepare(`
-  INSERT INTO reviews (course_id, user_name, text, rating, created_at)
-  VALUES (?, ?, ?, ?, ?)
-`);
-const stmtInsertScore = db.prepare(`
-  INSERT INTO scores (user_id, user_name, course_id, score, total, percentage, date)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
-`);
-
-function ensureCategory(slug) {
-  const safeSlug = toSlug(slug) || 'beginner';
-  stmtInsertCategory.run(toCategoryName(safeSlug), safeSlug);
-  const found = stmtSelectCategoryBySlug.get(safeSlug);
-  return found?.id;
 }
 
 function ensureQuizQuestions(questions) {
@@ -318,161 +241,6 @@ function ensureQuizQuestions(questions) {
   });
   return normalized;
 }
-
-function runInTransaction(work) {
-  db.exec('BEGIN');
-  try {
-    work();
-    db.exec('COMMIT');
-  } catch (error) {
-    db.exec('ROLLBACK');
-    throw error;
-  }
-}
-
-function seedDatabase() {
-  const now = new Date().toISOString();
-
-  const usersCount = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
-  const coursesCount = db.prepare('SELECT COUNT(*) AS count FROM courses').get().count;
-  const quizzesCount = db.prepare('SELECT COUNT(*) AS count FROM quizzes').get().count;
-  const reviewsCount = db.prepare('SELECT COUNT(*) AS count FROM reviews').get().count;
-  const scoresCount = db.prepare('SELECT COUNT(*) AS count FROM scores').get().count;
-
-  if (coursesCount === 0) {
-    const sanitized = seed.courses.map((course, idx) => sanitizeCourseSeed(course, idx));
-    runInTransaction(() => {
-      sanitized.forEach((course) => {
-        const categoryId = ensureCategory(course.category);
-        const createdAt = now;
-
-        stmtInsertCourse.run(
-          course.id,
-          course.en.title,
-          course.kz.title,
-          course.en.desc,
-          course.kz.desc,
-          categoryId,
-          course.heroType,
-          course.img,
-          normalizeYouTubeEmbed(course.video),
-          createdAt,
-          createdAt,
-        );
-      });
-    });
-  }
-
-  if (quizzesCount === 0) {
-    runInTransaction(() => {
-      seed.quizzes.forEach((quiz) => {
-        const courseId = parseIntSafe(quiz.courseId, null);
-        if (!courseId) return;
-
-        const courseExists = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
-        if (!courseExists) return;
-
-        const questions = ensureQuizQuestions(quiz.questions);
-        stmtInsertQuiz.run(courseId, JSON.stringify(questions), now);
-      });
-    });
-
-    const missingCourseIds = db
-      .prepare('SELECT c.id FROM courses c LEFT JOIN quizzes q ON q.course_id = c.id WHERE q.course_id IS NULL')
-      .all();
-
-    missingCourseIds.forEach((row) => {
-      stmtInsertQuiz.run(row.id, JSON.stringify(ensureQuizQuestions([])), now);
-    });
-  }
-
-  if (usersCount === 0 && Array.isArray(seed.users) && seed.users.length) {
-    runInTransaction(() => {
-      seed.users.forEach((user) => {
-        const name = cleanText(user.name);
-        const phone = cleanText(user.phone || '+7 700 000 00 00');
-        const email = cleanText(user.email).toLowerCase();
-        if (!name || !isValidEmail(email)) return;
-
-        const rawPassword = cleanText(user.password);
-        const passwordHash = rawPassword.startsWith('$2') ? rawPassword : bcrypt.hashSync(rawPassword || 'Password123!', 10);
-        const role = user.role === 'admin' ? 'admin' : 'user';
-        const createdAt = user.registeredAt || user.createdAt || now;
-
-        stmtInsertUser.run(parseIntSafe(user.id, null), name, phone, email, passwordHash, role, createdAt);
-
-        const enrolled = Array.isArray(user.enrolledCourses) ? user.enrolledCourses : [];
-        enrolled.forEach((courseIdRaw) => {
-          const courseId = parseIntSafe(courseIdRaw, null);
-          if (!courseId) return;
-          db.prepare('INSERT OR IGNORE INTO enrollments (user_id, course_id, enrolled_at) VALUES (?, ?, ?)').run(
-            parseIntSafe(user.id, 0),
-            courseId,
-            now,
-          );
-        });
-      });
-    });
-  }
-
-  const adminEmail = 'admin@jsha.kz';
-  const adminExists = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
-  if (!adminExists) {
-    db.prepare('INSERT INTO users (name, phone, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
-      'Admin User',
-      '+7 700 111 22 33',
-      adminEmail,
-      bcrypt.hashSync('Admin123!', 10),
-      'admin',
-      now,
-    );
-  }
-
-  if (reviewsCount === 0 && Array.isArray(seed.reviews) && seed.reviews.length) {
-    runInTransaction(() => {
-      seed.reviews.forEach((review) => {
-        const courseId = review.courseId ? parseIntSafe(review.courseId, null) : null;
-        const userName = cleanText(review.userName);
-        const text = cleanText(review.text);
-        const rating = Math.max(1, Math.min(5, parseIntSafe(review.rating, 5) || 5));
-        const createdAt = review.createdAt || now;
-
-        if (!userName || !text) return;
-        stmtInsertReview.run(courseId, userName, text, rating, createdAt);
-      });
-    });
-  }
-
-  if (scoresCount === 0 && Array.isArray(seed.scores) && seed.scores.length) {
-    runInTransaction(() => {
-      seed.scores.forEach((scoreRow) => {
-        const userId = parseIntSafe(scoreRow.userId, 0) || 0;
-        const courseId = parseIntSafe(scoreRow.courseId, null);
-        const score = parseIntSafe(scoreRow.score, null);
-        const total = parseIntSafe(scoreRow.total, null);
-        if (!courseId || score === null || !total || total <= 0) return;
-
-        const percentage = Math.round((score / total) * 100);
-        stmtInsertScore.run(
-          userId,
-          cleanText(scoreRow.userName) || 'Guest',
-          courseId,
-          score,
-          total,
-          percentage,
-          scoreRow.date || now,
-        );
-      });
-    });
-  }
-
-  db.prepare('INSERT OR IGNORE INTO telemetry (key, value) VALUES (?, ?)').run('telegramClicks', 0);
-  if (seed.telemetry && Number.isFinite(Number(seed.telemetry.telegramClicks))) {
-    db.prepare('UPDATE telemetry SET value = ? WHERE key = ?').run(Number(seed.telemetry.telegramClicks), 'telegramClicks');
-  }
-}
-
-seedDatabase();
 
 function mapCourseRow(row) {
   return {
@@ -492,6 +260,15 @@ function mapCourseRow(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function parseQuizQuestions(raw) {
+  try {
+    const parsed = JSON.parse(raw || '[]');
+    return ensureQuizQuestions(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return ensureQuizQuestions([]);
+  }
 }
 
 function extractCoursePayload(body) {
@@ -519,14 +296,51 @@ function validateCoursePayload(payload) {
   return '';
 }
 
-function getCourseList({ search = '', page = null, limit = null } = {}) {
+async function ensureCategory(slug) {
+  const safeSlug = COURSE_LEVELS.has(slug) ? slug : 'beginner';
+  await dbRun('INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)', [
+    toCategoryName(safeSlug),
+    safeSlug,
+  ]);
+  const row = await dbGet('SELECT id FROM categories WHERE slug = ?', [safeSlug]);
+  return row?.id || null;
+}
+
+async function getCourseById(courseId) {
+  const row = await dbGet(
+    `
+      SELECT
+        c.id,
+        c.title_en,
+        c.title_kz,
+        c.desc_en,
+        c.desc_kz,
+        c.hero_type,
+        c.img,
+        c.video,
+        c.created_at,
+        c.updated_at,
+        cat.slug AS category
+      FROM courses c
+      JOIN categories cat ON cat.id = c.category_id
+      WHERE c.id = ?
+    `,
+    [courseId],
+  );
+
+  return row ? mapCourseRow(row) : null;
+}
+
+async function getCourseList({ search = '', page = null, limit = null } = {}) {
   const where = [];
   const params = [];
 
   const q = cleanText(search).toLowerCase();
   if (q) {
-    where.push('(LOWER(c.title_en) LIKE ? OR LOWER(c.title_kz) LIKE ? OR LOWER(c.desc_en) LIKE ? OR LOWER(c.desc_kz) LIKE ? OR LOWER(cat.slug) LIKE ?)');
     const like = `%${q}%`;
+    where.push(
+      '(LOWER(c.title_en) LIKE ? OR LOWER(c.title_kz) LIKE ? OR LOWER(c.desc_en) LIKE ? OR LOWER(c.desc_kz) LIKE ? OR LOWER(cat.slug) LIKE ?)',
+    );
     params.push(like, like, like, like, like);
   }
 
@@ -558,491 +372,840 @@ function getCourseList({ search = '', page = null, limit = null } = {}) {
     params.push(limit, (page - 1) * limit);
   }
 
-  return db.prepare(sql).all(...params).map(mapCourseRow);
+  const rows = await dbAll(sql, params);
+  return rows.map(mapCourseRow);
 }
 
-function countCourses(search = '') {
+async function countCourses(search = '') {
   const q = cleanText(search).toLowerCase();
   if (!q) {
-    return db.prepare('SELECT COUNT(*) AS count FROM courses').get().count;
+    const row = await dbGet('SELECT COUNT(*) AS count FROM courses');
+    return Number(row?.count || 0);
   }
 
   const like = `%${q}%`;
-  return db
-    .prepare(`
+  const row = await dbGet(
+    `
       SELECT COUNT(*) AS count
       FROM courses c
       JOIN categories cat ON cat.id = c.category_id
       WHERE LOWER(c.title_en) LIKE ? OR LOWER(c.title_kz) LIKE ? OR LOWER(c.desc_en) LIKE ? OR LOWER(c.desc_kz) LIKE ? OR LOWER(cat.slug) LIKE ?
-    `)
-    .get(like, like, like, like, like).count;
-}
-
-function buildAdminOverview() {
-  const statsRow = {
-    users: db.prepare('SELECT COUNT(*) AS count FROM users').get().count,
-    courses: db.prepare('SELECT COUNT(*) AS count FROM courses').get().count,
-    scores: db.prepare('SELECT COUNT(*) AS count FROM scores').get().count,
-    reviews: db.prepare('SELECT COUNT(*) AS count FROM reviews').get().count,
-    enrollments: db.prepare('SELECT COUNT(*) AS count FROM enrollments').get().count,
-    avgScore: db.prepare('SELECT COALESCE(ROUND(AVG(percentage)), 0) AS avgScore FROM scores').get().avgScore,
-    telegramClicks: db.prepare('SELECT COALESCE(value, 0) AS value FROM telemetry WHERE key = ?').get('telegramClicks')?.value || 0,
-  };
-
-  const topCourses = db
-    .prepare(`
-      SELECT c.id AS courseId, c.title_en AS title, COUNT(e.id) AS enrolled
-      FROM courses c
-      LEFT JOIN enrollments e ON e.course_id = c.id
-      GROUP BY c.id
-      ORDER BY enrolled DESC, c.id ASC
-      LIMIT 5
-    `)
-    .all()
-    .map((row) => ({
-      courseId: row.courseId,
-      title: row.title,
-      enrolled: Number(row.enrolled) || 0,
-    }));
-
-  const topScorers = db
-    .prepare(`
-      SELECT user_name AS userName, COUNT(*) AS attempts, ROUND(AVG(percentage)) AS avgPercentage
-      FROM scores
-      GROUP BY user_name
-      ORDER BY avgPercentage DESC, attempts DESC, user_name ASC
-      LIMIT 10
-    `)
-    .all()
-    .map((row) => ({
-      userName: row.userName,
-      attempts: Number(row.attempts) || 0,
-      avgPercentage: Number(row.avgPercentage) || 0,
-    }));
-
-  return {
-    stats: statsRow,
-    topCourses,
-    topScorers,
-    generatedAt: new Date().toISOString(),
-  };
-}
-
-app.get('/api/users', (req, res) => {
-  const rows = db
-    .prepare(`
-      SELECT
-        u.id,
-        u.name,
-        u.phone,
-        u.email,
-        u.role,
-        u.created_at,
-        COALESCE(GROUP_CONCAT(e.course_id), '') AS enrolled_ids
-      FROM users u
-      LEFT JOIN enrollments e ON e.user_id = u.id
-      GROUP BY u.id
-      ORDER BY u.created_at DESC, u.id DESC
-    `)
-    .all();
-
-  const users = rows.map((row) => sanitizeUserResponse(row, parseEnrolledIds(row.enrolled_ids)));
-  res.json(users);
-});
-
-app.post('/api/register', (req, res) => {
-  const name = cleanText(req.body?.name);
-  const phone = cleanText(req.body?.phone);
-  const email = cleanText(req.body?.email).toLowerCase();
-  const password = String(req.body?.password || '');
-
-  if (!name || name.length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters' });
-  if (!isValidPhone(phone)) return res.status(400).json({ error: 'Invalid phone number' });
-  if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
-  if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-
-  const exists = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-  if (exists) return res.status(400).json({ error: 'Email already registered' });
-
-  const createdAt = new Date().toISOString();
-  const passwordHash = bcrypt.hashSync(password, 10);
-
-  const result = db
-    .prepare('INSERT INTO users (name, phone, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(name, phone, email, passwordHash, 'user', createdAt);
-
-  res.json({
-    success: true,
-    user: {
-      id: Number(result.lastInsertRowid),
-      name,
-      email,
-      role: 'user',
-    },
-  });
-});
-
-app.post('/api/login', (req, res) => {
-  const email = cleanText(req.body?.email).toLowerCase();
-  const password = String(req.body?.password || '');
-
-  if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
-
-  const row = db.prepare('SELECT id, name, email, role, password_hash FROM users WHERE email = ?').get(email);
-  if (!row) return res.status(401).json({ error: 'Invalid credentials' });
-
-  const ok = bcrypt.compareSync(password, row.password_hash);
-  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
-
-  res.json({
-    success: true,
-    user: {
-      id: row.id,
-      name: row.name,
-      email: row.email,
-      role: row.role,
-    },
-  });
-});
-
-app.put('/api/users/:id', (req, res) => {
-  const id = parseIntSafe(req.params.id, null);
-  if (!id) return res.status(400).json({ error: 'Invalid user id' });
-
-  const current = db.prepare('SELECT id, name, phone, role FROM users WHERE id = ?').get(id);
-  if (!current) return res.status(404).json({ error: 'User not found' });
-
-  const name = cleanText(req.body?.name || current.name);
-  const phone = cleanText(req.body?.phone || current.phone);
-  const role = req.body?.role === 'admin' ? 'admin' : 'user';
-
-  if (!name || name.length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters' });
-  if (!isValidPhone(phone)) return res.status(400).json({ error: 'Invalid phone number' });
-
-  db.prepare('UPDATE users SET name = ?, phone = ?, role = ? WHERE id = ?').run(name, phone, role, id);
-
-  res.json({ success: true });
-});
-
-app.delete('/api/users/:id', (req, res) => {
-  const id = parseIntSafe(req.params.id, null);
-  if (!id) return res.status(400).json({ error: 'Invalid user id' });
-
-  db.prepare('DELETE FROM scores WHERE user_id = ?').run(id);
-  const result = db.prepare('DELETE FROM users WHERE id = ?').run(id);
-
-  if (!result.changes) return res.status(404).json({ error: 'User not found' });
-
-  res.json({ success: true });
-});
-
-app.get('/api/courses', (req, res) => {
-  const search = cleanText(req.query.search || '');
-  const page = parseIntSafe(req.query.page, null);
-  const limit = parseIntSafe(req.query.limit, null);
-
-  if (page && limit) {
-    const safeLimit = Math.max(1, Math.min(limit, 50));
-    const safePage = Math.max(1, page);
-    const items = getCourseList({ search, page: safePage, limit: safeLimit });
-    const total = countCourses(search);
-
-    return res.json({
-      items,
-      pagination: {
-        page: safePage,
-        limit: safeLimit,
-        total,
-        totalPages: Math.max(1, Math.ceil(total / safeLimit)),
-      },
-    });
-  }
-
-  const items = getCourseList({ search });
-  return res.json(items);
-});
-
-app.post('/api/courses', (req, res) => {
-  const payload = extractCoursePayload(req.body);
-  const error = validateCoursePayload(payload);
-  if (error) return res.status(400).json({ error });
-
-  const categoryId = ensureCategory(payload.category);
-  const now = new Date().toISOString();
-
-  const result = db
-    .prepare(`
-      INSERT INTO courses
-        (title_en, title_kz, desc_en, desc_kz, category_id, hero_type, img, video, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
-    .run(
-      payload.titleEn,
-      payload.titleKz,
-      payload.descEn,
-      payload.descKz,
-      categoryId,
-      payload.heroType,
-      payload.img,
-      payload.video,
-      now,
-      now,
-    );
-
-  const courseId = Number(result.lastInsertRowid);
-  const questions = ensureQuizQuestions([]);
-  stmtInsertQuiz.run(courseId, JSON.stringify(questions), now);
-
-  const row = db
-    .prepare(`
-      SELECT c.id, c.title_en, c.title_kz, c.desc_en, c.desc_kz, c.hero_type, c.img, c.video, c.created_at, c.updated_at, cat.slug AS category
-      FROM courses c
-      JOIN categories cat ON cat.id = c.category_id
-      WHERE c.id = ?
-    `)
-    .get(courseId);
-
-  res.json({ success: true, course: mapCourseRow(row) });
-});
-
-app.put('/api/courses/:id', (req, res) => {
-  const courseId = parseIntSafe(req.params.id, null);
-  if (!courseId) return res.status(400).json({ error: 'Invalid course id' });
-
-  const existing = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
-  if (!existing) return res.status(404).json({ error: 'Course not found' });
-
-  const payload = extractCoursePayload(req.body);
-  const error = validateCoursePayload(payload);
-  if (error) return res.status(400).json({ error });
-
-  const categoryId = ensureCategory(payload.category);
-  const now = new Date().toISOString();
-
-  db.prepare(`
-    UPDATE courses
-    SET title_en = ?, title_kz = ?, desc_en = ?, desc_kz = ?, category_id = ?, hero_type = ?, img = ?, video = ?, updated_at = ?
-    WHERE id = ?
-  `).run(
-    payload.titleEn,
-    payload.titleKz,
-    payload.descEn,
-    payload.descKz,
-    categoryId,
-    payload.heroType,
-    payload.img,
-    payload.video,
-    now,
-    courseId,
+    `,
+    [like, like, like, like, like],
   );
 
-  const row = db
-    .prepare(`
-      SELECT c.id, c.title_en, c.title_kz, c.desc_en, c.desc_kz, c.hero_type, c.img, c.video, c.created_at, c.updated_at, cat.slug AS category
-      FROM courses c
-      JOIN categories cat ON cat.id = c.category_id
-      WHERE c.id = ?
-    `)
-    .get(courseId);
+  return Number(row?.count || 0);
+}
 
-  res.json({ success: true, course: mapCourseRow(row) });
-});
+async function buildAdminOverview() {
+  const [
+    usersRow,
+    coursesRow,
+    scoresRow,
+    reviewsRow,
+    enrollmentsRow,
+    avgScoreRow,
+    telegramRow,
+    topCoursesRows,
+    topScorersRows,
+  ] = await Promise.all([
+    dbGet('SELECT COUNT(*) AS count FROM users'),
+    dbGet('SELECT COUNT(*) AS count FROM courses'),
+    dbGet('SELECT COUNT(*) AS count FROM scores'),
+    dbGet('SELECT COUNT(*) AS count FROM reviews'),
+    dbGet('SELECT COUNT(*) AS count FROM enrollments'),
+    dbGet('SELECT COALESCE(ROUND(AVG(percentage)), 0) AS avgScore FROM scores'),
+    dbGet('SELECT COALESCE(value, 0) AS value FROM telemetry WHERE key = ?', ['telegramClicks']),
+    dbAll(
+      `
+        SELECT c.id AS courseId, c.title_en AS title, COUNT(e.id) AS enrolled
+        FROM courses c
+        LEFT JOIN enrollments e ON e.course_id = c.id
+        GROUP BY c.id
+        ORDER BY enrolled DESC, c.id ASC
+        LIMIT 5
+      `,
+    ),
+    dbAll(
+      `
+        SELECT user_name AS userName, COUNT(*) AS attempts, ROUND(AVG(percentage)) AS avgPercentage
+        FROM scores
+        GROUP BY user_name
+        ORDER BY avgPercentage DESC, attempts DESC, user_name ASC
+        LIMIT 10
+      `,
+    ),
+  ]);
 
-app.delete('/api/courses/:id', (req, res) => {
-  const courseId = parseIntSafe(req.params.id, null);
-  if (!courseId) return res.status(400).json({ error: 'Invalid course id' });
+  return {
+    stats: {
+      users: Number(usersRow?.count || 0),
+      courses: Number(coursesRow?.count || 0),
+      scores: Number(scoresRow?.count || 0),
+      reviews: Number(reviewsRow?.count || 0),
+      enrollments: Number(enrollmentsRow?.count || 0),
+      avgScore: Number(avgScoreRow?.avgScore || 0),
+      telegramClicks: Number(telegramRow?.value || 0),
+    },
+    topCourses: topCoursesRows.map((row) => ({
+      courseId: row.courseId,
+      title: row.title,
+      enrolled: Number(row.enrolled || 0),
+    })),
+    topScorers: topScorersRows.map((row) => ({
+      userName: row.userName,
+      attempts: Number(row.attempts || 0),
+      avgPercentage: Number(row.avgPercentage || 0),
+    })),
+  };
+}
 
-  const result = db.prepare('DELETE FROM courses WHERE id = ?').run(courseId);
-  if (!result.changes) return res.status(404).json({ error: 'Course not found' });
-
-  res.json({ success: true });
-});
-
-app.post('/api/enroll', (req, res) => {
-  const userId = parseIntSafe(req.body?.userId, null);
-  const courseId = parseIntSafe(req.body?.courseId, null);
-
-  if (!userId || !courseId) return res.status(400).json({ error: 'userId and courseId are required' });
-
-  const userExists = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
-  if (!userExists) return res.status(404).json({ error: 'User not found' });
-
-  const courseExists = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
-  if (!courseExists) return res.status(404).json({ error: 'Course not found' });
-
+async function seedDatabase() {
+  const seed = safeReadStoreSeed();
   const now = new Date().toISOString();
-  db.prepare('INSERT OR IGNORE INTO enrollments (user_id, course_id, enrolled_at) VALUES (?, ?, ?)').run(userId, courseId, now);
 
-  res.json({ success: true });
-});
+  const [coursesCountRow, quizzesCountRow, usersCountRow, reviewsCountRow, scoresCountRow] = await Promise.all([
+    dbGet('SELECT COUNT(*) AS count FROM courses'),
+    dbGet('SELECT COUNT(*) AS count FROM quizzes'),
+    dbGet('SELECT COUNT(*) AS count FROM users'),
+    dbGet('SELECT COUNT(*) AS count FROM reviews'),
+    dbGet('SELECT COUNT(*) AS count FROM scores'),
+  ]);
 
-app.get('/api/reviews', (req, res) => {
-  const courseId = parseIntSafe(req.query.courseId, null);
+  const coursesCount = Number(coursesCountRow?.count || 0);
+  const quizzesCount = Number(quizzesCountRow?.count || 0);
+  const usersCount = Number(usersCountRow?.count || 0);
+  const reviewsCount = Number(reviewsCountRow?.count || 0);
+  const scoresCount = Number(scoresCountRow?.count || 0);
 
-  const sql = courseId
-    ? 'SELECT id, course_id, user_name, text, rating, created_at FROM reviews WHERE course_id = ? ORDER BY datetime(created_at) ASC, id ASC'
-    : 'SELECT id, course_id, user_name, text, rating, created_at FROM reviews ORDER BY datetime(created_at) ASC, id ASC';
-
-  const rows = courseId ? db.prepare(sql).all(courseId) : db.prepare(sql).all();
-
-  const reviews = rows.map((row) => ({
-    id: row.id,
-    courseId: row.course_id,
-    userName: row.user_name,
-    text: row.text,
-    rating: row.rating,
-    createdAt: row.created_at,
-  }));
-
-  res.json(reviews);
-});
-
-app.post('/api/reviews', (req, res) => {
-  const courseId = req.body?.courseId ? parseIntSafe(req.body.courseId, null) : null;
-  const userName = cleanText(req.body?.userName);
-  const text = cleanText(req.body?.text);
-  const rating = Math.max(1, Math.min(5, parseIntSafe(req.body?.rating, 5) || 5));
-
-  if (!userName || userName.length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters' });
-  if (!text || text.length < 10) return res.status(400).json({ error: 'Review text must be at least 10 characters' });
-
-  if (courseId) {
-    const courseExists = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
-    if (!courseExists) return res.status(404).json({ error: 'Course not found' });
-  }
-
-  const createdAt = new Date().toISOString();
-  const result = db
-    .prepare('INSERT INTO reviews (course_id, user_name, text, rating, created_at) VALUES (?, ?, ?, ?, ?)')
-    .run(courseId, userName, text, rating, createdAt);
-
-  res.json({
-    success: true,
-    review: {
-      id: Number(result.lastInsertRowid),
-      courseId,
-      userName,
-      text,
-      rating,
-      createdAt,
-    },
-  });
-});
-
-app.get('/api/quizzes', (req, res) => {
-  const rows = db.prepare('SELECT course_id, questions_json FROM quizzes ORDER BY course_id ASC').all();
-  const quizzes = rows.map((row) => {
-    let questions = [];
-    try {
-      questions = JSON.parse(row.questions_json);
-    } catch {
-      questions = ensureQuizQuestions([]);
+  if (coursesCount === 0) {
+    const sanitizedCourses = seed.courses.map((course, idx) => sanitizeCourseSeed(course, idx));
+    for (const course of sanitizedCourses) {
+      const categoryId = await ensureCategory(course.category);
+      await dbRun(
+        `
+          INSERT OR REPLACE INTO courses
+            (id, title_en, title_kz, desc_en, desc_kz, category_id, hero_type, img, video, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          course.id,
+          course.en.title,
+          course.kz.title,
+          course.en.desc,
+          course.kz.desc,
+          categoryId,
+          course.heroType,
+          course.img,
+          normalizeYouTubeEmbed(course.video),
+          now,
+          now,
+        ],
+      );
     }
-    return {
-      courseId: row.course_id,
-      questions,
-    };
+  }
+
+  if (quizzesCount === 0) {
+    for (const quiz of seed.quizzes) {
+      const courseId = parseIntSafe(quiz.courseId, null);
+      if (!courseId) continue;
+
+      const courseExists = await dbGet('SELECT id FROM courses WHERE id = ?', [courseId]);
+      if (!courseExists) continue;
+
+      const questions = ensureQuizQuestions(quiz.questions);
+      await dbRun(
+        'INSERT OR REPLACE INTO quizzes (course_id, questions_json, updated_at) VALUES (?, ?, ?)',
+        [courseId, JSON.stringify(questions), now],
+      );
+    }
+
+    const missingRows = await dbAll(
+      'SELECT c.id FROM courses c LEFT JOIN quizzes q ON q.course_id = c.id WHERE q.course_id IS NULL',
+    );
+
+    for (const row of missingRows) {
+      await dbRun(
+        'INSERT OR REPLACE INTO quizzes (course_id, questions_json, updated_at) VALUES (?, ?, ?)',
+        [row.id, JSON.stringify(ensureQuizQuestions([])), now],
+      );
+    }
+  }
+
+  if (usersCount === 0 && Array.isArray(seed.users) && seed.users.length) {
+    for (const user of seed.users) {
+      const id = parseIntSafe(user.id, null);
+      const name = cleanText(user.name);
+      const phone = cleanText(user.phone || '+7 700 000 00 00');
+      const email = cleanText(user.email).toLowerCase();
+      const rawPassword = cleanText(user.password);
+
+      if (!id || !name || !isValidEmail(email)) continue;
+
+      const passwordHash = rawPassword.startsWith('$2')
+        ? rawPassword
+        : bcrypt.hashSync(rawPassword || 'Password123!', 10);
+
+      const role = user.role === 'admin' ? 'admin' : 'user';
+      const createdAt = user.registeredAt || user.createdAt || now;
+
+      await dbRun(
+        `
+          INSERT OR IGNORE INTO users
+            (id, name, phone, email, password_hash, role, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        [id, name, phone, email, passwordHash, role, createdAt],
+      );
+
+      const enrolledCourses = Array.isArray(user.enrolledCourses) ? user.enrolledCourses : [];
+      for (const courseRaw of enrolledCourses) {
+        const courseId = parseIntSafe(courseRaw, null);
+        if (!courseId) continue;
+
+        await dbRun(
+          'INSERT OR IGNORE INTO enrollments (user_id, course_id, enrolled_at) VALUES (?, ?, ?)',
+          [id, courseId, now],
+        );
+      }
+    }
+  }
+
+  const adminEmail = 'admin@jsha.kz';
+  const adminExists = await dbGet('SELECT id FROM users WHERE email = ?', [adminEmail]);
+  if (!adminExists) {
+    await dbRun(
+      'INSERT INTO users (name, phone, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      ['Admin User', '+7 700 111 22 33', adminEmail, bcrypt.hashSync('Admin123!', 10), 'admin', now],
+    );
+  }
+
+  if (reviewsCount === 0 && Array.isArray(seed.reviews) && seed.reviews.length) {
+    for (const review of seed.reviews) {
+      const courseId = review.courseId ? parseIntSafe(review.courseId, null) : null;
+      const userName = cleanText(review.userName);
+      const text = cleanText(review.text);
+      const rating = Math.max(1, Math.min(5, parseIntSafe(review.rating, 5) || 5));
+      const createdAt = review.createdAt || now;
+
+      if (!userName || !text) continue;
+
+      await dbRun(
+        'INSERT INTO reviews (course_id, user_name, text, rating, created_at) VALUES (?, ?, ?, ?, ?)',
+        [courseId, userName, text, rating, createdAt],
+      );
+    }
+  }
+
+  if (scoresCount === 0 && Array.isArray(seed.scores) && seed.scores.length) {
+    for (const scoreRow of seed.scores) {
+      const userId = parseIntSafe(scoreRow.userId, 0) || 0;
+      const courseId = parseIntSafe(scoreRow.courseId, null);
+      const score = parseIntSafe(scoreRow.score, null);
+      const total = parseIntSafe(scoreRow.total, null);
+      if (!courseId || score === null || !total || total <= 0) continue;
+
+      const percentage = Math.round((score / total) * 100);
+      await dbRun(
+        'INSERT INTO scores (user_id, user_name, course_id, score, total, percentage, date) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [
+          userId,
+          cleanText(scoreRow.userName) || 'Guest',
+          courseId,
+          score,
+          total,
+          percentage,
+          scoreRow.date || now,
+        ],
+      );
+    }
+  }
+
+  await dbRun('INSERT OR IGNORE INTO telemetry (key, value) VALUES (?, ?)', ['telegramClicks', 0]);
+
+  if (seed.telemetry && Number.isFinite(Number(seed.telemetry.telegramClicks))) {
+    await dbRun('UPDATE telemetry SET value = ? WHERE key = ?', [
+      Number(seed.telemetry.telegramClicks),
+      'telegramClicks',
+    ]);
+  }
+}
+
+let initPromise = null;
+
+function initializeDb() {
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    await dbExec('PRAGMA foreign_keys = ON;');
+
+    await dbExec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        slug TEXT NOT NULL UNIQUE
+      );
+
+      CREATE TABLE IF NOT EXISTS courses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title_en TEXT NOT NULL,
+        title_kz TEXT NOT NULL,
+        desc_en TEXT NOT NULL,
+        desc_kz TEXT NOT NULL,
+        category_id INTEGER NOT NULL,
+        hero_type TEXT NOT NULL,
+        img TEXT NOT NULL,
+        video TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
+      );
+
+      CREATE TABLE IF NOT EXISTS enrollments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        course_id INTEGER NOT NULL,
+        enrolled_at TEXT NOT NULL,
+        UNIQUE(user_id, course_id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        course_id INTEGER,
+        user_name TEXT NOT NULL,
+        text TEXT NOT NULL,
+        rating INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS quizzes (
+        course_id INTEGER PRIMARY KEY,
+        questions_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS scores (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        user_name TEXT NOT NULL,
+        course_id INTEGER NOT NULL,
+        score INTEGER NOT NULL,
+        total INTEGER NOT NULL,
+        percentage INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        UNIQUE(user_id, course_id),
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS telemetry (
+        key TEXT PRIMARY KEY,
+        value INTEGER NOT NULL DEFAULT 0
+      );
+    `);
+
+    await seedDatabase();
+  })().catch((error) => {
+    initPromise = null;
+    throw error;
   });
-  res.json(quizzes);
+
+  return initPromise;
+}
+
+app.use((req, res, next) => {
+  initializeDb().then(() => next()).catch(next);
 });
 
-app.get('/api/quizzes/:courseId', (req, res) => {
-  const courseId = parseIntSafe(req.params.courseId, null);
-  if (!courseId) return res.status(400).json({ error: 'Invalid course id' });
+const asyncHandler = (handler) => (req, res, next) => {
+  Promise.resolve(handler(req, res, next)).catch(next);
+};
 
-  const row = db.prepare('SELECT course_id, questions_json FROM quizzes WHERE course_id = ?').get(courseId);
-  if (!row) return res.status(404).json({ error: 'Quiz not found' });
-
-  let questions = [];
-  try {
-    questions = JSON.parse(row.questions_json);
-  } catch {
-    questions = ensureQuizQuestions([]);
-  }
-
-  res.json({ courseId: row.course_id, questions });
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true });
 });
 
-app.get('/api/scores', (req, res) => {
-  const userId = parseIntSafe(req.query.userId, null);
+app.get(
+  '/api/users',
+  asyncHandler(async (req, res) => {
+    const rows = await dbAll(
+      `
+        SELECT
+          u.id,
+          u.name,
+          u.phone,
+          u.email,
+          u.role,
+          u.created_at,
+          COALESCE(GROUP_CONCAT(e.course_id), '') AS enrolled_ids
+        FROM users u
+        LEFT JOIN enrollments e ON e.user_id = u.id
+        GROUP BY u.id
+        ORDER BY datetime(u.created_at) DESC, u.id DESC
+      `,
+    );
 
-  const sql = userId
-    ? 'SELECT user_id, user_name, course_id, score, total, percentage, date FROM scores WHERE user_id = ? ORDER BY datetime(date) DESC, id DESC'
-    : 'SELECT user_id, user_name, course_id, score, total, percentage, date FROM scores ORDER BY datetime(date) DESC, id DESC';
+    const users = rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      phone: row.phone,
+      email: row.email,
+      role: row.role,
+      enrolledCourses: parseEnrolledIds(row.enrolled_ids),
+      registeredAt: row.created_at,
+    }));
 
-  const rows = userId ? db.prepare(sql).all(userId) : db.prepare(sql).all();
+    res.json(users);
+  }),
+);
 
-  const scores = rows.map((row) => ({
-    userId: row.user_id,
-    userName: row.user_name,
-    courseId: row.course_id,
-    score: row.score,
-    total: row.total,
-    percentage: row.percentage,
-    date: row.date,
-  }));
+app.post(
+  '/api/register',
+  asyncHandler(async (req, res) => {
+    const name = cleanText(req.body?.name);
+    const phone = cleanText(req.body?.phone);
+    const email = cleanText(req.body?.email).toLowerCase();
+    const password = String(req.body?.password || '');
 
-  res.json(scores);
-});
+    if (!name || name.length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters' });
+    if (!isValidPhone(phone)) return res.status(400).json({ error: 'Please enter a valid phone number' });
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
 
-app.post('/api/scores', (req, res) => {
-  const userId = parseIntSafe(req.body?.userId, 0) || 0;
-  const userName = cleanText(req.body?.userName) || 'Guest';
-  const courseId = parseIntSafe(req.body?.courseId, null);
-  const score = parseIntSafe(req.body?.score, null);
-  const total = parseIntSafe(req.body?.total, null);
+    const exists = await dbGet('SELECT id FROM users WHERE email = ?', [email]);
+    if (exists) return res.status(400).json({ error: 'Email already registered' });
 
-  if (!courseId) return res.status(400).json({ error: 'courseId is required' });
-  if (score === null || total === null || total <= 0 || score < 0 || score > total) {
-    return res.status(400).json({ error: 'Invalid score payload' });
-  }
+    const createdAt = new Date().toISOString();
+    const passwordHash = bcrypt.hashSync(password, 10);
 
-  const courseExists = db.prepare('SELECT id FROM courses WHERE id = ?').get(courseId);
-  if (!courseExists) return res.status(404).json({ error: 'Course not found' });
+    const result = await dbRun(
+      'INSERT INTO users (name, phone, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, phone, email, passwordHash, 'user', createdAt],
+    );
 
-  const percentage = Math.round((score / total) * 100);
-  const date = new Date().toISOString();
+    res.json({
+      success: true,
+      user: {
+        id: Number(result.lastID),
+        name,
+        email,
+        role: 'user',
+      },
+    });
+  }),
+);
 
-  db.prepare(`
-    INSERT INTO scores (user_id, user_name, course_id, score, total, percentage, date)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(user_id, course_id)
-    DO UPDATE SET
-      user_name = excluded.user_name,
-      score = excluded.score,
-      total = excluded.total,
-      percentage = excluded.percentage,
-      date = excluded.date
-  `).run(userId, userName, courseId, score, total, percentage, date);
+app.post(
+  '/api/login',
+  asyncHandler(async (req, res) => {
+    const email = cleanText(req.body?.email).toLowerCase();
+    const password = String(req.body?.password || '');
 
-  res.json({
-    success: true,
-    entry: {
-      userId,
-      userName,
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+
+    const row = await dbGet('SELECT id, name, email, role, password_hash FROM users WHERE email = ?', [email]);
+    if (!row) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const ok = bcrypt.compareSync(password, row.password_hash);
+    if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+
+    res.json({
+      success: true,
+      user: {
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        role: row.role,
+      },
+    });
+  }),
+);
+
+app.put(
+  '/api/users/:id',
+  asyncHandler(async (req, res) => {
+    const id = parseIntSafe(req.params.id, null);
+    if (!id) return res.status(400).json({ error: 'Invalid user id' });
+
+    const current = await dbGet('SELECT id, name, phone, role FROM users WHERE id = ?', [id]);
+    if (!current) return res.status(404).json({ error: 'User not found' });
+
+    const name = cleanText(req.body?.name || current.name);
+    const phone = cleanText(req.body?.phone || current.phone);
+    const role = req.body?.role === 'admin' ? 'admin' : 'user';
+
+    if (!name || name.length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters' });
+    if (!isValidPhone(phone)) return res.status(400).json({ error: 'Invalid phone number' });
+
+    await dbRun('UPDATE users SET name = ?, phone = ?, role = ? WHERE id = ?', [name, phone, role, id]);
+
+    res.json({ success: true });
+  }),
+);
+
+app.delete(
+  '/api/users/:id',
+  asyncHandler(async (req, res) => {
+    const id = parseIntSafe(req.params.id, null);
+    if (!id) return res.status(400).json({ error: 'Invalid user id' });
+
+    await dbRun('DELETE FROM scores WHERE user_id = ?', [id]);
+    const result = await dbRun('DELETE FROM users WHERE id = ?', [id]);
+
+    if (!result.changes) return res.status(404).json({ error: 'User not found' });
+
+    res.json({ success: true });
+  }),
+);
+
+app.get(
+  '/api/courses',
+  asyncHandler(async (req, res) => {
+    const search = cleanText(req.query.search || '');
+    const page = parseIntSafe(req.query.page, null);
+    const limit = parseIntSafe(req.query.limit, null);
+
+    if (page && limit) {
+      const safeLimit = Math.max(1, Math.min(limit, 50));
+      const safePage = Math.max(1, page);
+      const items = await getCourseList({ search, page: safePage, limit: safeLimit });
+      const total = await countCourses(search);
+
+      return res.json({
+        items,
+        pagination: {
+          page: safePage,
+          limit: safeLimit,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / safeLimit)),
+        },
+      });
+    }
+
+    const items = await getCourseList({ search });
+    return res.json(items);
+  }),
+);
+
+app.post(
+  '/api/courses',
+  asyncHandler(async (req, res) => {
+    const payload = extractCoursePayload(req.body);
+    const error = validateCoursePayload(payload);
+    if (error) return res.status(400).json({ error });
+
+    const categoryId = await ensureCategory(payload.category);
+    const now = new Date().toISOString();
+
+    const result = await dbRun(
+      `
+        INSERT INTO courses
+          (title_en, title_kz, desc_en, desc_kz, category_id, hero_type, img, video, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        payload.titleEn,
+        payload.titleKz,
+        payload.descEn,
+        payload.descKz,
+        categoryId,
+        payload.heroType,
+        payload.img,
+        payload.video,
+        now,
+        now,
+      ],
+    );
+
+    const courseId = Number(result.lastID);
+    await dbRun('INSERT OR REPLACE INTO quizzes (course_id, questions_json, updated_at) VALUES (?, ?, ?)', [
       courseId,
-      score,
-      total,
-      percentage,
-      date,
-    },
-  });
-});
+      JSON.stringify(ensureQuizQuestions([])),
+      now,
+    ]);
 
-app.post('/api/telemetry/telegram-click', (req, res) => {
-  db.prepare('UPDATE telemetry SET value = value + 1 WHERE key = ?').run('telegramClicks');
-  const row = db.prepare('SELECT value FROM telemetry WHERE key = ?').get('telegramClicks');
-  res.json({ success: true, telegramClicks: row?.value || 0 });
-});
+    const course = await getCourseById(courseId);
+    res.json({ success: true, course });
+  }),
+);
 
-app.get('/api/admin/overview', (req, res) => {
-  res.json(buildAdminOverview());
-});
+app.put(
+  '/api/courses/:id',
+  asyncHandler(async (req, res) => {
+    const courseId = parseIntSafe(req.params.id, null);
+    if (!courseId) return res.status(400).json({ error: 'Invalid course id' });
 
-app.get('/api/export/users', async (req, res) => {
-  try {
-    const users = db
-      .prepare(`
+    const existing = await dbGet('SELECT id FROM courses WHERE id = ?', [courseId]);
+    if (!existing) return res.status(404).json({ error: 'Course not found' });
+
+    const payload = extractCoursePayload(req.body);
+    const error = validateCoursePayload(payload);
+    if (error) return res.status(400).json({ error });
+
+    const categoryId = await ensureCategory(payload.category);
+    const now = new Date().toISOString();
+
+    await dbRun(
+      `
+        UPDATE courses
+        SET title_en = ?, title_kz = ?, desc_en = ?, desc_kz = ?, category_id = ?, hero_type = ?, img = ?, video = ?, updated_at = ?
+        WHERE id = ?
+      `,
+      [
+        payload.titleEn,
+        payload.titleKz,
+        payload.descEn,
+        payload.descKz,
+        categoryId,
+        payload.heroType,
+        payload.img,
+        payload.video,
+        now,
+        courseId,
+      ],
+    );
+
+    const course = await getCourseById(courseId);
+    res.json({ success: true, course });
+  }),
+);
+
+app.delete(
+  '/api/courses/:id',
+  asyncHandler(async (req, res) => {
+    const courseId = parseIntSafe(req.params.id, null);
+    if (!courseId) return res.status(400).json({ error: 'Invalid course id' });
+
+    const result = await dbRun('DELETE FROM courses WHERE id = ?', [courseId]);
+    if (!result.changes) return res.status(404).json({ error: 'Course not found' });
+
+    res.json({ success: true });
+  }),
+);
+
+app.post(
+  '/api/enroll',
+  asyncHandler(async (req, res) => {
+    const userId = parseIntSafe(req.body?.userId, null);
+    const courseId = parseIntSafe(req.body?.courseId, null);
+
+    if (!userId || !courseId) return res.status(400).json({ error: 'userId and courseId are required' });
+
+    const userExists = await dbGet('SELECT id FROM users WHERE id = ?', [userId]);
+    if (!userExists) return res.status(404).json({ error: 'User not found' });
+
+    const courseExists = await dbGet('SELECT id FROM courses WHERE id = ?', [courseId]);
+    if (!courseExists) return res.status(404).json({ error: 'Course not found' });
+
+    await dbRun('INSERT OR IGNORE INTO enrollments (user_id, course_id, enrolled_at) VALUES (?, ?, ?)', [
+      userId,
+      courseId,
+      new Date().toISOString(),
+    ]);
+
+    res.json({ success: true });
+  }),
+);
+
+app.get(
+  '/api/reviews',
+  asyncHandler(async (req, res) => {
+    const courseId = parseIntSafe(req.query.courseId, null);
+
+    const sql = courseId
+      ? 'SELECT id, course_id, user_name, text, rating, created_at FROM reviews WHERE course_id = ? ORDER BY datetime(created_at) ASC, id ASC'
+      : 'SELECT id, course_id, user_name, text, rating, created_at FROM reviews ORDER BY datetime(created_at) ASC, id ASC';
+
+    const rows = courseId ? await dbAll(sql, [courseId]) : await dbAll(sql);
+
+    const reviews = rows.map((row) => ({
+      id: row.id,
+      courseId: row.course_id,
+      userName: row.user_name,
+      text: row.text,
+      rating: row.rating,
+      createdAt: row.created_at,
+    }));
+
+    res.json(reviews);
+  }),
+);
+
+app.post(
+  '/api/reviews',
+  asyncHandler(async (req, res) => {
+    const courseId = req.body?.courseId ? parseIntSafe(req.body.courseId, null) : null;
+    const userName = cleanText(req.body?.userName);
+    const text = cleanText(req.body?.text);
+    const rating = Math.max(1, Math.min(5, parseIntSafe(req.body?.rating, 5) || 5));
+
+    if (!userName || userName.length < 2) return res.status(400).json({ error: 'Name must be at least 2 characters' });
+    if (!text || text.length < 10) return res.status(400).json({ error: 'Review text must be at least 10 characters' });
+
+    if (courseId) {
+      const courseExists = await dbGet('SELECT id FROM courses WHERE id = ?', [courseId]);
+      if (!courseExists) return res.status(404).json({ error: 'Course not found' });
+    }
+
+    const createdAt = new Date().toISOString();
+    const result = await dbRun(
+      'INSERT INTO reviews (course_id, user_name, text, rating, created_at) VALUES (?, ?, ?, ?, ?)',
+      [courseId, userName, text, rating, createdAt],
+    );
+
+    res.json({
+      success: true,
+      review: {
+        id: Number(result.lastID),
+        courseId,
+        userName,
+        text,
+        rating,
+        createdAt,
+      },
+    });
+  }),
+);
+
+app.get(
+  '/api/quizzes',
+  asyncHandler(async (req, res) => {
+    const rows = await dbAll('SELECT course_id, questions_json FROM quizzes ORDER BY course_id ASC');
+    const quizzes = rows.map((row) => ({
+      courseId: row.course_id,
+      questions: parseQuizQuestions(row.questions_json),
+    }));
+    res.json(quizzes);
+  }),
+);
+
+app.get(
+  '/api/quizzes/:courseId',
+  asyncHandler(async (req, res) => {
+    const courseId = parseIntSafe(req.params.courseId, null);
+    if (!courseId) return res.status(400).json({ error: 'Invalid course id' });
+
+    const row = await dbGet('SELECT course_id, questions_json FROM quizzes WHERE course_id = ?', [courseId]);
+    if (!row) return res.status(404).json({ error: 'Quiz not found' });
+
+    res.json({
+      courseId: row.course_id,
+      questions: parseQuizQuestions(row.questions_json),
+    });
+  }),
+);
+
+app.get(
+  '/api/scores',
+  asyncHandler(async (req, res) => {
+    const userId = parseIntSafe(req.query.userId, null);
+
+    const sql = userId
+      ? 'SELECT user_id, user_name, course_id, score, total, percentage, date FROM scores WHERE user_id = ? ORDER BY datetime(date) DESC, id DESC'
+      : 'SELECT user_id, user_name, course_id, score, total, percentage, date FROM scores ORDER BY datetime(date) DESC, id DESC';
+
+    const rows = userId ? await dbAll(sql, [userId]) : await dbAll(sql);
+
+    const scores = rows.map((row) => ({
+      userId: row.user_id,
+      userName: row.user_name,
+      courseId: row.course_id,
+      score: row.score,
+      total: row.total,
+      percentage: row.percentage,
+      date: row.date,
+    }));
+
+    res.json(scores);
+  }),
+);
+
+app.post(
+  '/api/scores',
+  asyncHandler(async (req, res) => {
+    const userId = parseIntSafe(req.body?.userId, 0) || 0;
+    const userName = cleanText(req.body?.userName) || 'Guest';
+    const courseId = parseIntSafe(req.body?.courseId, null);
+    const score = parseIntSafe(req.body?.score, null);
+    const total = parseIntSafe(req.body?.total, null);
+
+    if (!courseId) return res.status(400).json({ error: 'courseId is required' });
+    if (score === null || total === null || total <= 0 || score < 0 || score > total) {
+      return res.status(400).json({ error: 'Invalid score payload' });
+    }
+
+    const courseExists = await dbGet('SELECT id FROM courses WHERE id = ?', [courseId]);
+    if (!courseExists) return res.status(404).json({ error: 'Course not found' });
+
+    const percentage = Math.round((score / total) * 100);
+    const date = new Date().toISOString();
+
+    await dbRun(
+      `
+        INSERT INTO scores (user_id, user_name, course_id, score, total, percentage, date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(user_id, course_id)
+        DO UPDATE SET
+          user_name = excluded.user_name,
+          score = excluded.score,
+          total = excluded.total,
+          percentage = excluded.percentage,
+          date = excluded.date
+      `,
+      [userId, userName, courseId, score, total, percentage, date],
+    );
+
+    res.json({
+      success: true,
+      entry: {
+        userId,
+        userName,
+        courseId,
+        score,
+        total,
+        percentage,
+        date,
+      },
+    });
+  }),
+);
+
+app.post(
+  '/api/telemetry/telegram-click',
+  asyncHandler(async (req, res) => {
+    await dbRun('UPDATE telemetry SET value = value + 1 WHERE key = ?', ['telegramClicks']);
+    const row = await dbGet('SELECT value FROM telemetry WHERE key = ?', ['telegramClicks']);
+    res.json({ success: true, telegramClicks: Number(row?.value || 0) });
+  }),
+);
+
+app.get(
+  '/api/admin/overview',
+  asyncHandler(async (req, res) => {
+    res.json(await buildAdminOverview());
+  }),
+);
+
+app.get(
+  '/api/export/users',
+  asyncHandler(async (req, res) => {
+    const users = await dbAll(
+      `
         SELECT
           u.id,
           u.name,
@@ -1055,8 +1218,8 @@ app.get('/api/export/users', async (req, res) => {
         LEFT JOIN enrollments e ON e.user_id = u.id
         GROUP BY u.id
         ORDER BY u.created_at DESC, u.id DESC
-      `)
-      .all();
+      `,
+    );
 
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Users');
@@ -1090,18 +1253,16 @@ app.get('/api/export/users', async (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     await workbook.xlsx.write(res);
     res.end();
-  } catch (error) {
-    console.error('Export users error:', error.message);
-    res.status(500).json({ error: 'Failed to export users' });
-  }
-});
+  }),
+);
 
-app.get('/api/export/full-report', async (req, res) => {
-  try {
+app.get(
+  '/api/export/full-report',
+  asyncHandler(async (req, res) => {
     const workbook = new ExcelJS.Workbook();
 
-    const users = db
-      .prepare(`
+    const users = await dbAll(
+      `
         SELECT
           u.id,
           u.name,
@@ -1114,8 +1275,8 @@ app.get('/api/export/full-report', async (req, res) => {
         LEFT JOIN enrollments e ON e.user_id = u.id
         GROUP BY u.id
         ORDER BY u.created_at DESC, u.id DESC
-      `)
-      .all();
+      `,
+    );
 
     const usersSheet = workbook.addWorksheet('Users');
     usersSheet.columns = [
@@ -1140,8 +1301,8 @@ app.get('/api/export/full-report', async (req, res) => {
       });
     });
 
-    const courses = db
-      .prepare(`
+    const courses = await dbAll(
+      `
         SELECT
           c.id,
           c.title_en,
@@ -1157,8 +1318,8 @@ app.get('/api/export/full-report', async (req, res) => {
         FROM courses c
         JOIN categories cat ON cat.id = c.category_id
         ORDER BY c.id ASC
-      `)
-      .all();
+      `,
+    );
 
     const coursesSheet = workbook.addWorksheet('Courses');
     coursesSheet.columns = [
@@ -1189,9 +1350,9 @@ app.get('/api/export/full-report', async (req, res) => {
       });
     });
 
-    const scores = db
-      .prepare('SELECT user_id, user_name, course_id, score, total, percentage, date FROM scores ORDER BY datetime(date) DESC, id DESC')
-      .all();
+    const scores = await dbAll(
+      'SELECT user_id, user_name, course_id, score, total, percentage, date FROM scores ORDER BY datetime(date) DESC, id DESC',
+    );
 
     const scoresSheet = workbook.addWorksheet('Scores');
     scoresSheet.columns = [
@@ -1216,9 +1377,9 @@ app.get('/api/export/full-report', async (req, res) => {
       });
     });
 
-    const reviews = db
-      .prepare('SELECT id, course_id, user_name, rating, text, created_at FROM reviews ORDER BY datetime(created_at) DESC, id DESC')
-      .all();
+    const reviews = await dbAll(
+      'SELECT id, course_id, user_name, rating, text, created_at FROM reviews ORDER BY datetime(created_at) DESC, id DESC',
+    );
 
     const reviewsSheet = workbook.addWorksheet('Reviews');
     reviewsSheet.columns = [
@@ -1247,7 +1408,7 @@ app.get('/api/export/full-report', async (req, res) => {
       { header: 'Value', key: 'value', width: 20 },
     ];
 
-    const overview = buildAdminOverview();
+    const overview = await buildAdminOverview();
     Object.entries(overview.stats).forEach(([metric, value]) => {
       analyticsSheet.addRow({ metric, value });
     });
@@ -1256,23 +1417,20 @@ app.get('/api/export/full-report', async (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     await workbook.xlsx.write(res);
     res.end();
-  } catch (error) {
-    console.error('Export full report error:', error.message);
-    res.status(500).json({ error: 'Failed to export full report' });
-  }
-});
+  }),
+);
 
-app.get('/api/export/analytics.json', (req, res) => {
-  res.json(buildAdminOverview());
-});
+app.get(
+  '/api/export/analytics.json',
+  asyncHandler(async (req, res) => {
+    res.json(await buildAdminOverview());
+  }),
+);
 
+app.use((err, req, res, next) => {
+  console.error('API error:', err.message);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 module.exports = app;
-
-  try {
-    const { startBot } = require('./bot.js');
-    startBot();
-  } catch (error) {
-    console.error('Bot load error:', error.message);
-  }
-
