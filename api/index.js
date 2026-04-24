@@ -6,15 +6,10 @@ const bcrypt = require('bcryptjs');
 const { DatabaseSync } = require('node:sqlite');
 
 const app = express();
-const PORT = 3003;
 
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = path.join(process.cwd(), 'api', 'data');
 const STORE_FILE = path.join(DATA_DIR, 'store.json');
 const DB_FILE = path.join(DATA_DIR, 'lab6.sqlite');
-const PUBLIC_DIR = path.join(__dirname, 'public');
-const DIST_DIR = path.join(__dirname, 'dist');
-const DIST_INDEX = path.join(DIST_DIR, 'index.html');
-const VITE_INDEX = path.join(__dirname, 'index.html');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+?[\d\s\-()]{10,20}$/;
@@ -1271,19 +1266,8 @@ app.get('/api/export/analytics.json', (req, res) => {
   res.json(buildAdminOverview());
 });
 
-function serveApp(req, res) {
-  if (fs.existsSync(DIST_INDEX)) {
-    return res.sendFile(DIST_INDEX);
-  }
-  return res.sendFile(VITE_INDEX);
-}
 
-const spaRoutes = ['/', '/courses', '/register', '/login', '/admin', '/contact', '/quiz'];
-spaRoutes.forEach((route) => app.get(route, serveApp));
-app.get('/course/:id', serveApp);
-
-app.listen(PORT, () => {
-  console.log(`JS Heroes Academy running at http://localhost:${PORT}`);
+module.exports = app;
 
   try {
     const { startBot } = require('./bot.js');
@@ -1291,4 +1275,4 @@ app.listen(PORT, () => {
   } catch (error) {
     console.error('Bot load error:', error.message);
   }
-});
+
